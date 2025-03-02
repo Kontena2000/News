@@ -18,47 +18,17 @@ type PineconeQueryResponse = {
   matches?: PineconeMatch[];
 };
 
-let pineconeClient: PineconeClient | null = null;
+// Flag to determine if we're in a browser environment
+const isBrowser = typeof window !== 'undefined';
 
-/**
- * Initialize the Pinecone client
- */
-export const initPinecone = async (): Promise<PineconeClient> => {
-  if (pineconeClient) return pineconeClient;
-  
-  // Check if we're in a browser environment
-  if (typeof window !== 'undefined') {
-    console.warn("Pinecone client initialized in browser environment. Using mock implementation.");
-    return createMockPineconeClient();
-  }
-  
-  try {
-    // Dynamic import to avoid bundling Node.js modules in client-side code
-    const { Pinecone } = await import('@pinecone-database/pinecone');
-    
-    pineconeClient = new Pinecone({
-      apiKey: pineconeApiKey,
-    });
-    
-    return pineconeClient;
-  } catch (error) {
-    console.error("Error initializing Pinecone client:", error);
-    return createMockPineconeClient();
-  }
-};
-
-/**
- * Create a mock Pinecone client for client-side usage
- */
+// Create a mock Pinecone client for client-side usage
 const createMockPineconeClient = () => {
   return {
     index: (indexName: string) => createMockPineconeIndex()
   };
 };
 
-/**
- * Create a mock Pinecone index for client-side usage
- */
+// Create a mock Pinecone index for client-side usage
 const createMockPineconeIndex = () => {
   return {
     query: async ({ vector, topK, includeMetadata }: any) => {
@@ -88,6 +58,41 @@ const createMockPineconeIndex = () => {
       };
     }
   };
+};
+
+// Use a factory pattern to create the appropriate client based on environment
+const createPineconeClient = async (): Promise<PineconeClient> => {
+  // Always use mock client in browser environment
+  if (isBrowser) {
+    console.warn("Browser environment detected. Using mock Pinecone client.");
+    return createMockPineconeClient();
+  }
+  
+  // Server-side only code
+  try {
+    // Dynamic import only on server side
+    const { Pinecone } = await import('@pinecone-database/pinecone');
+    
+    return new Pinecone({
+      apiKey: pineconeApiKey,
+    });
+  } catch (error) {
+    console.error("Error initializing Pinecone client:", error);
+    return createMockPineconeClient();
+  }
+};
+
+// Singleton pattern for client instance
+let pineconeClientPromise: Promise<PineconeClient> | null = null;
+
+/**
+ * Initialize the Pinecone client
+ */
+export const initPinecone = async (): Promise<PineconeClient> => {
+  if (!pineconeClientPromise) {
+    pineconeClientPromise = createPineconeClient();
+  }
+  return pineconeClientPromise;
 };
 
 /**
