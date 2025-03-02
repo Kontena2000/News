@@ -50,7 +50,9 @@ export default function NewsPage() {
 
   // Format the last updated time in a consistent way
   useEffect(() => {
-    // Format time consistently for both server and client
+    if (typeof window === "undefined") return; // Skip on server-side
+    
+    // Format time consistently for client-side only
     const formatTime = (date: Date) => {
       const hours = date.getUTCHours().toString().padStart(2, '0')
       const minutes = date.getUTCMinutes().toString().padStart(2, '0')
@@ -58,7 +60,7 @@ export default function NewsPage() {
       return `${hours}:${minutes}:${seconds} UTC`
     }
 
-    // Format date consistently for both server and client
+    // Format date consistently for client-side only
     const formatDate = (date: Date) => {
       const year = date.getUTCFullYear()
       const month = (date.getUTCMonth() + 1).toString().padStart(2, '0')
@@ -148,9 +150,12 @@ export default function NewsPage() {
           </div>
         </div>
 
-        <div className="text-xs text-muted-foreground">
-          Last updated: {formattedTime} · {formattedDate}
-        </div>
+        {/* Prevent hydration error by only showing when client-side */}
+        {typeof window !== "undefined" && (
+          <div className="text-xs text-muted-foreground">
+            Last updated: {formattedTime} · {formattedDate}
+          </div>
+        )}
 
         <Tabs defaultValue="all">
           <div className="flex items-center justify-between">
