@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Clock, Copy, ExternalLink, Eye, EyeOff, Search, Loader2 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -23,18 +23,8 @@ export function ReasoningSettings() {
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState("all")
   
-  // Fetch prompt logs on component mount
-  useEffect(() => {
-    fetchPromptLogs();
-  }, [activeTab]);
-  
-  // Filter logs when search query or active tab changes
-  useEffect(() => {
-    filterLogs();
-  }, [searchQuery, promptLogs]);
-  
-  // Fetch prompt logs from the service
-  const fetchPromptLogs = async () => {
+  // Memoize fetchPromptLogs to prevent unnecessary re-creation on each render
+  const fetchPromptLogs = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -48,10 +38,10 @@ export function ReasoningSettings() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [activeTab]);
   
-  // Filter logs based on search query
-  const filterLogs = async () => {
+  // Memoize filterLogs to prevent unnecessary re-creation on each render
+  const filterLogs = useCallback(async () => {
     if (!searchQuery.trim()) {
       setFilteredLogs(promptLogs);
       return;
@@ -73,7 +63,17 @@ export function ReasoningSettings() {
       );
       setFilteredLogs(filtered);
     }
-  };
+  }, [searchQuery, promptLogs, activeTab]);
+  
+  // Fetch prompt logs on component mount and when activeTab changes
+  useEffect(() => {
+    fetchPromptLogs();
+  }, [fetchPromptLogs]);
+  
+  // Filter logs when search query or prompt logs change
+  useEffect(() => {
+    filterLogs();
+  }, [filterLogs]);
   
   // Format date for display
   const formatDate = (dateString: string) => {

@@ -1,6 +1,7 @@
 
 import { NewsSettings, PromptLog } from "@/types/settings";
 import { savePromptLog, getPromptLogs as fetchPromptLogs, updatePromptLogArticleCount } from "@/services/supabaseService";
+import { queryVectorDB } from "@/services/pineconeService";
 
 /**
  * Enhances a base prompt with context from the vector database
@@ -33,31 +34,41 @@ export const enhancePrompt = async (
  * Retrieves relevant context from the vector database
  */
 const getContextFromVectorDB = async (settings: NewsSettings): Promise<string> => {
-  // This is a placeholder implementation
-  // In a real application, this would query a vector database
-  
   if (!settings.vectorDbEnabled) {
     return "";
   }
   
   try {
-    // Mock vector DB connection
-    // In a real implementation, this would connect to a vector DB like Pinecone, Weaviate, etc.
+    // Query the vector database using the company information as context
+    const query = `${settings.companyName} ${settings.industry} ${settings.keyProducts?.join(" ")} ${settings.interests?.join(" ")}`;
     
-    // Simulate fetching context based on settings
-    const mockContext = `
-      Company Name: ${settings.companyName || "Your Company"}
-      Industry: ${settings.industry || "Technology"}
-      Key Products: ${settings.keyProducts?.join(", ") || "Various products and services"}
-      Competitors: ${settings.competitors?.join(", ") || "Various market competitors"}
-      Interests: ${settings.interests?.join(", ") || "Industry trends, market developments"}
-    `;
+    // Get context from Pinecone
+    const context = await queryVectorDB(query, settings);
     
-    return mockContext;
+    // If no context from vector DB, use company info as fallback
+    if (!context) {
+      return createCompanyContextFallback(settings);
+    }
+    
+    return context;
   } catch (error) {
     console.error("Error getting context from vector DB:", error);
-    return "";
+    // Fallback to company info if vector DB fails
+    return createCompanyContextFallback(settings);
   }
+};
+
+/**
+ * Creates a fallback context from company information
+ */
+const createCompanyContextFallback = (settings: NewsSettings): string => {
+  return `
+    Company Name: ${settings.companyName || "Your Company"}
+    Industry: ${settings.industry || "Technology"}
+    Key Products: ${settings.keyProducts?.join(", ") || "Various products and services"}
+    Competitors: ${settings.competitors?.join(", ") || "Various market competitors"}
+    Interests: ${settings.interests?.join(", ") || "Industry trends, market developments"}
+  `;
 };
 
 /**

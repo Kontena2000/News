@@ -22,7 +22,6 @@ export const initPinecone = async (): Promise<Pinecone> => {
   try {
     pineconeClient = new Pinecone({
       apiKey: pineconeApiKey,
-      environment: pineconeEnvironment,
     });
     
     return pineconeClient;

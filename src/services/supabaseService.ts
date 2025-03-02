@@ -6,11 +6,48 @@ import { PromptLog } from "@/types/settings";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
-if (!supabaseUrl || !supabaseKey) {
-  console.error("Supabase URL or key is missing. Please check your environment variables.");
+// Create a fallback client if environment variables are not set
+let supabase;
+
+try {
+  if (!supabaseUrl || !supabaseKey) {
+    console.warn("Supabase URL or key is missing. Using mock mode for development.");
+    // Create a mock client for development
+    supabase = {
+      from: () => ({
+        insert: async () => ({ data: null, error: null }),
+        select: async () => ({ data: [], error: null }),
+        update: async () => ({ data: null, error: null }),
+        delete: async () => ({ data: null, error: null }),
+        eq: () => ({ data: [], error: null }),
+        lt: () => ({ data: [], error: null }),
+        or: () => ({ data: [], error: null }),
+        order: () => ({ data: [], error: null, limit: () => ({ data: [], error: null }) }),
+        limit: () => ({ data: [], error: null }),
+      }),
+    };
+  } else {
+    supabase = createClient(supabaseUrl, supabaseKey);
+  }
+} catch (error) {
+  console.error("Failed to initialize Supabase client:", error);
+  // Fallback to mock client
+  supabase = {
+    from: () => ({
+      insert: async () => ({ data: null, error: null }),
+      select: async () => ({ data: [], error: null }),
+      update: async () => ({ data: null, error: null }),
+      delete: async () => ({ data: null, error: null }),
+      eq: () => ({ data: [], error: null }),
+      lt: () => ({ data: [], error: null }),
+      or: () => ({ data: [], error: null }),
+      order: () => ({ data: [], error: null, limit: () => ({ data: [], error: null }) }),
+      limit: () => ({ data: [], error: null }),
+    }),
+  };
 }
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+export { supabase };
 
 /**
  * Saves a prompt log to Supabase
@@ -26,7 +63,10 @@ export const savePromptLog = async (promptLog: PromptLog): Promise<void> => {
     }
   } catch (error) {
     console.error("Error saving prompt log to Supabase:", error);
-    throw error;
+    // Don't throw in production to prevent UI crashes
+    if (process.env.NODE_ENV === "development") {
+      throw error;
+    }
   }
 };
 
@@ -80,7 +120,10 @@ export const updatePromptLogArticleCount = async (
     }
   } catch (error) {
     console.error("Error updating prompt log article count:", error);
-    throw error;
+    // Don't throw in production to prevent UI crashes
+    if (process.env.NODE_ENV === "development") {
+      throw error;
+    }
   }
 };
 
@@ -104,7 +147,10 @@ export const deleteOldPromptLogs = async (
     }
   } catch (error) {
     console.error("Error deleting old prompt logs:", error);
-    throw error;
+    // Don't throw in production to prevent UI crashes
+    if (process.env.NODE_ENV === "development") {
+      throw error;
+    }
   }
 };
 
