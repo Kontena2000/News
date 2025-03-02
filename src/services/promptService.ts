@@ -1,5 +1,6 @@
 
 import { NewsSettings, PromptLog } from "@/types/settings";
+import { savePromptLog, getPromptLogs as fetchPromptLogs, updatePromptLogArticleCount } from "@/services/supabaseService";
 
 /**
  * Enhances a base prompt with context from the vector database
@@ -17,7 +18,7 @@ export const enhancePrompt = async (
     
     // Log the prompt if logging is enabled
     if (settings.enablePromptLogging) {
-      logPrompt(basePrompt, enhancedPrompt, settings);
+      await logPrompt(basePrompt, enhancedPrompt, settings);
     }
     
     return enhancedPrompt;
@@ -110,29 +111,47 @@ export const getDefaultBasePrompt = (settings: NewsSettings): string => {
 /**
  * Logs a prompt for future reference
  */
-const logPrompt = (
+const logPrompt = async (
   originalPrompt: string,
   enhancedPrompt: string,
   settings: NewsSettings,
   provider: "perplexity" | "openai" | "anthropic" = "perplexity"
-): void => {
-  // In a real implementation, this would store the prompt in a database
-  // For now, we'll just log to console
+): Promise<string> => {
+  try {
+    const promptLog: PromptLog = {
+      id: Date.now().toString(),
+      timestamp: new Date().toISOString(),
+      originalPrompt,
+      enhancedPrompt,
+      provider,
+      articleCount: 0,
+      status: "success"
+    };
+    
+    // Save to Supabase
+    await savePromptLog(promptLog);
+    
+    return promptLog.id;
+  } catch (error) {
+    console.error("Error logging prompt:", error);
+    return "";
+  }
+};
+
+/**
+ * Updates the article count for a prompt log
+ */
+export const updatePromptLogCount = async (
+  logId: string,
+  articleCount: number
+): Promise<void> => {
+  if (!logId) return;
   
-  const promptLog: PromptLog = {
-    id: Date.now().toString(),
-    timestamp: new Date().toISOString(),
-    originalPrompt,
-    enhancedPrompt,
-    provider,
-    articleCount: 0, // This would be updated after receiving results
-    status: "success"
-  };
-  
-  console.log("Prompt logged:", promptLog);
-  
-  // In a real implementation, you would save this to a database
-  // savePromptLog(promptLog);
+  try {
+    await updatePromptLogArticleCount(logId, articleCount);
+  } catch (error) {
+    console.error("Error updating prompt log article count:", error);
+  }
 };
 
 /**
@@ -142,34 +161,38 @@ export const getPromptLogs = async (
   limit: number = 50,
   provider?: "perplexity" | "openai" | "anthropic"
 ): Promise<PromptLog[]> => {
-  // In a real implementation, this would fetch logs from a database
-  // For now, return mock data
-  
-  // Mock implementation
-  const mockLogs: PromptLog[] = [
-    {
-      id: "1",
-      timestamp: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
-      originalPrompt: "Find news about HPC innovations in the last week",
-      enhancedPrompt: "Enhanced prompt with context...",
-      provider: "perplexity",
-      articleCount: 12,
-      status: "success"
-    },
-    {
-      id: "2",
-      timestamp: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
-      originalPrompt: "Latest developments in Bitcoin mining efficiency",
-      enhancedPrompt: "Enhanced prompt with context...",
-      provider: "perplexity",
-      articleCount: 8,
-      status: "success"
+  try {
+    // Get logs from Supabase
+    return await fetchPromptLogs(limit, provider);
+  } catch (error) {
+    console.error("Error retrieving prompt logs:", error);
+    
+    // Fallback to mock data if Supabase fails
+    const mockLogs: PromptLog[] = [
+      {
+        id: "1",
+        timestamp: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
+        originalPrompt: "Find news about HPC innovations in the last week",
+        enhancedPrompt: "Enhanced prompt with context...",
+        provider: "perplexity",
+        articleCount: 12,
+        status: "success"
+      },
+      {
+        id: "2",
+        timestamp: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+        originalPrompt: "Latest developments in Bitcoin mining efficiency",
+        enhancedPrompt: "Enhanced prompt with context...",
+        provider: "perplexity",
+        articleCount: 8,
+        status: "success"
+      }
+    ];
+    
+    if (provider) {
+      return mockLogs.filter(log => log.provider === provider);
     }
-  ];
-  
-  if (provider) {
-    return mockLogs.filter(log => log.provider === provider).slice(0, limit);
+    
+    return mockLogs;
   }
-  
-  return mockLogs.slice(0, limit);
 };
