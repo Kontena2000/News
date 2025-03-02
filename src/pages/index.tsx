@@ -14,7 +14,9 @@ import {
   Share2,
   RefreshCw,
   Tag,
-  ExternalLink
+  ExternalLink,
+  BarChart,
+  Network
 } from "lucide-react"
 
 import { mockArticles, mockDailySummary } from "@/data/mock-news"
@@ -31,6 +33,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { TrendsAnalysis } from "@/components/news/TrendsAnalysis"
+import { CrossDomainInsights } from "@/components/news/CrossDomainInsights"
+import { CollaborativeAnnotation } from "@/components/news/CollaborativeAnnotation"
 
 export default function NewsPage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
@@ -41,6 +46,7 @@ export default function NewsPage() {
   const [lastUpdated, setLastUpdated] = useState(new Date())
   const [formattedTime, setFormattedTime] = useState("")
   const [formattedDate, setFormattedDate] = useState("")
+  const [insightsTimeframe, setInsightsTimeframe] = useState<"day" | "week" | "month" | "quarter">("week")
 
   // Format the last updated time in a consistent way
   useEffect(() => {
@@ -151,6 +157,7 @@ export default function NewsPage() {
             <TabsList>
               <TabsTrigger value="all">All News</TabsTrigger>
               <TabsTrigger value="daily">Daily Summary</TabsTrigger>
+              <TabsTrigger value="insights">Insights</TabsTrigger>
               <TabsTrigger value="bookmarked">Bookmarked</TabsTrigger>
             </TabsList>
           </div>
@@ -234,6 +241,50 @@ export default function NewsPage() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="insights" className="mt-4">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-xl font-bold">Advanced Insights & Analysis</h2>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-muted-foreground">Timeframe:</span>
+                <select 
+                  className="rounded-md border border-input bg-background px-3 py-1 text-sm"
+                  value={insightsTimeframe}
+                  onChange={(e) => setInsightsTimeframe(e.target.value as any)}
+                >
+                  <option value="day">Daily</option>
+                  <option value="week">Weekly</option>
+                  <option value="month">Monthly</option>
+                  <option value="quarter">Quarterly</option>
+                </select>
+              </div>
+            </div>
+            
+            <div className="space-y-6">
+              <TrendsAnalysis 
+                articles={articles} 
+                timeframe={insightsTimeframe}
+              />
+              
+              <CrossDomainInsights articles={articles} />
+              
+              {activeArticle && (
+                <CollaborativeAnnotation article={activeArticle} />
+              )}
+              
+              {!activeArticle && (
+                <Card className="w-full">
+                  <CardContent className="flex flex-col items-center justify-center p-8 text-center">
+                    <Users className="h-12 w-12 text-muted-foreground" />
+                    <h3 className="mt-4 text-lg font-medium">Select an article for collaborative annotation</h3>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Click "Read More" on any article to add comments and tags for team collaboration
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </TabsContent>
 
           <TabsContent value="bookmarked" className="mt-4">

@@ -211,7 +211,7 @@ export function CollaborativeAnnotation({ article }: CollaborativeAnnotationProp
                 </Button>
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
-                Tags help categorize articles and identify patterns across your organization's knowledge base.
+                Tags help categorize articles and identify patterns across your organization&apos;s knowledge base.
               </p>
             </div>
             
