@@ -19,10 +19,8 @@ export function AdvancedSettings() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Database Connection Settings */}
         <DatabaseConnectionSettings />
         
-        {/* Perplexity API Settings */}
         <div className="space-y-4 pt-4">
           <h3 className="text-lg font-medium">Perplexity API Settings</h3>
           <div className="space-y-2">
@@ -30,7 +28,6 @@ export function AdvancedSettings() {
             <Input 
               id="perplexity-api-key"
               type="password"
-              defaultValue="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"
               placeholder="pplx-..."
             />
             <p className="text-sm text-muted-foreground">
@@ -108,7 +105,6 @@ export function AdvancedSettings() {
         
         <Separator />
         
-        {/* OpenAI API Settings */}
         <div className="space-y-4 pt-4">
           <h3 className="text-lg font-medium">OpenAI API Settings</h3>
           <div className="space-y-2">
@@ -116,7 +112,6 @@ export function AdvancedSettings() {
             <Input 
               id="api-key"
               type="password"
-              defaultValue="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"
               placeholder="sk-..."
             />
             <p className="text-sm text-muted-foreground">
@@ -145,7 +140,6 @@ export function AdvancedSettings() {
         
         <Separator />
         
-        {/* Pinecone Vector Database Settings */}
         <div className="space-y-4 pt-4">
           <h3 className="text-lg font-medium">Pinecone Vector Database</h3>
           <div className="space-y-2">
@@ -153,7 +147,6 @@ export function AdvancedSettings() {
             <Input 
               id="pinecone-api-key"
               type="password"
-              defaultValue="pcsk_63MATz_GapM2KixVaV3PVuuAKwPTtXdHMvLFVTAWmwKfqzgzLUpc7TMsr3FuVvdxAkmktC"
               placeholder="pcsk_..."
             />
             <p className="text-sm text-muted-foreground">
@@ -165,7 +158,6 @@ export function AdvancedSettings() {
             <Label htmlFor="pinecone-url">Pinecone URL</Label>
             <Input 
               id="pinecone-url"
-              defaultValue="https://website-ifveaiv.svc.gcp-europe-west4-de1d.pinecone.io"
               placeholder="https://your-index.svc.region.pinecone.io"
             />
             <p className="text-sm text-muted-foreground">
@@ -177,7 +169,6 @@ export function AdvancedSettings() {
             <Label htmlFor="pinecone-namespace">Pinecone Namespace</Label>
             <Input 
               id="pinecone-namespace"
-              defaultValue="website"
               placeholder="namespace"
             />
             <p className="text-sm text-muted-foreground">
@@ -211,7 +202,6 @@ export function AdvancedSettings() {
         
         <Separator />
         
-        {/* Anthropic API Settings */}
         <div className="space-y-4 pt-4">
           <h3 className="text-lg font-medium">Anthropic API Settings</h3>
           <div className="space-y-2">
@@ -247,7 +237,6 @@ export function AdvancedSettings() {
         
         <Separator />
         
-        {/* System Settings */}
         <div className="space-y-4 pt-4">
           <h3 className="text-lg font-medium">System Settings</h3>
           <div className="space-y-2">
