@@ -1,13 +1,32 @@
 
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { PromptLog } from "@/types/settings";
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
+// Define a type for our mock client that matches the structure we use
+interface MockSupabaseClient {
+  from: (table: string) => {
+    insert: (data: any) => Promise<{ data: any | null; error: any | null }>;
+    select: (columns?: string) => Promise<{ data: any[] | null; error: any | null }>;
+    update: (data: any) => Promise<{ data: any | null; error: any | null }>;
+    delete: () => Promise<{ data: any | null; error: any | null }>;
+    eq: (column: string, value: any) => { data: any[] | null; error: any | null };
+    lt: (column: string, value: any) => { data: any[] | null; error: any | null };
+    or: (conditions: string) => { data: any[] | null; error: any | null };
+    order: (column: string, options?: { ascending: boolean }) => { 
+      data: any[] | null; 
+      error: any | null;
+      limit: (count: number) => { data: any[] | null; error: any | null };
+    };
+    limit: (count: number) => { data: any[] | null; error: any | null };
+  };
+}
+
 // Create a fallback client if environment variables are not set
-let supabase;
+let supabase: SupabaseClient | MockSupabaseClient;
 
 try {
   if (!supabaseUrl || !supabaseKey) {
