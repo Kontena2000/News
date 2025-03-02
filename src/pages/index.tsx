@@ -2,22 +2,28 @@
 import Head from "next/head"
 import { useState } from "react"
 import { 
-  ArrowUpDown, 
-  Calendar, 
-  Filter, 
   Grid3X3, 
   LayoutList, 
-  RefreshCw, 
-  Sparkles 
+  Sparkles,
+  ChevronDown,
+  ListTodo,
+  Users,
+  Lightbulb
 } from "lucide-react"
 
 import { mockArticles, mockDailySummary } from "@/data/mock-news"
-import { Article, NewsFilter } from "@/types/news"
+import { Article } from "@/types/news"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 export default function NewsPage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
@@ -27,7 +33,7 @@ export default function NewsPage() {
   return (
     <>
       <Head>
-        <title>ZORK News Scraper</title>
+        <title>News Scraper</title>
         <meta name="description" content="AI-powered news collection and analysis" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
@@ -41,14 +47,6 @@ export default function NewsPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm">
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Refresh
-            </Button>
-            <Button variant="outline" size="sm">
-              <Filter className="mr-2 h-4 w-4" />
-              Filters
-            </Button>
             <div className="flex items-center rounded-md border">
               <Button
                 variant={viewMode === "grid" ? "default" : "ghost"}
@@ -78,16 +76,6 @@ export default function NewsPage() {
               <TabsTrigger value="daily">Daily Summary</TabsTrigger>
               <TabsTrigger value="bookmarked">Bookmarked</TabsTrigger>
             </TabsList>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm">
-                <ArrowUpDown className="mr-2 h-4 w-4" />
-                Sort
-              </Button>
-              <Button variant="outline" size="sm">
-                <Calendar className="mr-2 h-4 w-4" />
-                Date Range
-              </Button>
-            </div>
           </div>
 
           <TabsContent value="all" className="mt-4">
@@ -202,7 +190,27 @@ function ArticleCard({ article }: { article: Article }) {
       </CardContent>
       <CardFooter className="flex justify-between p-4 pt-0">
         <Button variant="outline" size="sm">Read More</Button>
-        <Button variant="ghost" size="sm">Save</Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm">
+              Action <ChevronDown className="ml-1 h-3 w-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem className="flex items-center">
+              <ListTodo className="mr-2 h-4 w-4" />
+              <span>Add to Tasks</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem className="flex items-center">
+              <Users className="mr-2 h-4 w-4" />
+              <span>Add to Meetings</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem className="flex items-center">
+              <Lightbulb className="mr-2 h-4 w-4" />
+              <span>Add to Brainstorm</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </CardFooter>
     </Card>
   )
@@ -236,7 +244,27 @@ function ArticleListItem({ article }: { article: Article }) {
           </CardContent>
           <CardFooter className="mt-auto flex justify-between p-4 pt-0">
             <Button variant="outline" size="sm">Read More</Button>
-            <Button variant="ghost" size="sm">Save</Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm">
+                  Action <ChevronDown className="ml-1 h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem className="flex items-center">
+                  <ListTodo className="mr-2 h-4 w-4" />
+                  <span>Add to Tasks</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="flex items-center">
+                  <Users className="mr-2 h-4 w-4" />
+                  <span>Add to Meetings</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="flex items-center">
+                  <Lightbulb className="mr-2 h-4 w-4" />
+                  <span>Add to Brainstorm</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </CardFooter>
         </div>
       </div>
