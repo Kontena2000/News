@@ -30,6 +30,11 @@ export function DatabaseConnectionSettings() {
   const [connectionError, setConnectionError] = useState("")
   const [useConnectionString, setUseConnectionString] = useState(false)
   
+  // Supabase specific fields
+  const [supabaseUrl, setSupabaseUrl] = useState("")
+  const [supabaseKey, setSupabaseKey] = useState("")
+  const [supabaseServiceRole, setSupabaseServiceRole] = useState("")
+  
   const handleTestConnection = () => {
     setConnectionStatus("connecting")
     setConnectionError("")
@@ -45,6 +50,9 @@ export function DatabaseConnectionSettings() {
       }
     }, 1500)
   }
+  
+  // Check if Supabase is selected
+  const isSupabase = dbType === "supabase"
   
   return (
     <Accordion type="single" collapsible defaultValue="database-connection">
@@ -105,6 +113,7 @@ export function DatabaseConnectionSettings() {
                 <SelectValue placeholder="Select database type" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="supabase">Supabase</SelectItem>
                 <SelectItem value="postgres">PostgreSQL</SelectItem>
                 <SelectItem value="neon">Neon Postgres</SelectItem>
                 <SelectItem value="mysql">MySQL</SelectItem>
@@ -117,117 +126,174 @@ export function DatabaseConnectionSettings() {
             </p>
           </div>
           
-          {/* Connection Method Toggle */}
-          <div className="space-y-2">
-            <Label>Connection Method</Label>
-            <RadioGroup 
-              defaultValue={useConnectionString ? "string" : "fields"}
-              onValueChange={(value) => setUseConnectionString(value === "string")}
-              className="flex flex-col space-y-1"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="string" id="connection-string" />
-                <Label htmlFor="connection-string">Connection String</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="fields" id="connection-fields" />
-                <Label htmlFor="connection-fields">Individual Fields</Label>
-              </div>
-            </RadioGroup>
-          </div>
-          
-          {useConnectionString ? (
-            <div className="space-y-2">
-              <Label htmlFor="connection-string-input">Connection String</Label>
-              <Input 
-                id="connection-string-input"
-                type="password"
-                placeholder="postgresql://username:password@localhost:5432/database"
-                value={connectionString}
-                onChange={(e) => setConnectionString(e.target.value)}
-              />
-              <p className="text-sm text-muted-foreground">
-                Enter the full connection string for your database
-              </p>
-            </div>
-          ) : (
+          {/* Supabase-specific fields */}
+          {isSupabase ? (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="db-host">Host</Label>
-                  <Input 
-                    id="db-host"
-                    placeholder="localhost"
-                    value={dbHost}
-                    onChange={(e) => setDbHost(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="db-port">Port</Label>
-                  <Input 
-                    id="db-port"
-                    placeholder="5432"
-                    value={dbPort}
-                    onChange={(e) => setDbPort(e.target.value)}
-                  />
-                </div>
-              </div>
-              
               <div className="space-y-2">
-                <Label htmlFor="db-name">Database Name</Label>
+                <Label htmlFor="supabase-url">Supabase URL</Label>
                 <Input 
-                  id="db-name"
-                  placeholder="mydatabase"
-                  value={dbName}
-                  onChange={(e) => setDbName(e.target.value)}
+                  id="supabase-url"
+                  placeholder="https://your-project.supabase.co"
+                  value={supabaseUrl}
+                  onChange={(e) => setSupabaseUrl(e.target.value)}
                 />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="db-username">Username</Label>
-                  <Input 
-                    id="db-username"
-                    placeholder="username"
-                    value={dbUsername}
-                    onChange={(e) => setDbUsername(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="db-password">Password</Label>
-                  <Input 
-                    id="db-password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={dbPassword}
-                    onChange={(e) => setDbPassword(e.target.value)}
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="ssl-mode">SSL Mode</Label>
-                <Select 
-                  value={sslMode} 
-                  onValueChange={setSslMode}
-                >
-                  <SelectTrigger id="ssl-mode">
-                    <SelectValue placeholder="Select SSL mode" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="disable">Disable</SelectItem>
-                    <SelectItem value="allow">Allow</SelectItem>
-                    <SelectItem value="prefer">Prefer</SelectItem>
-                    <SelectItem value="require">Require</SelectItem>
-                    <SelectItem value="verify-ca">Verify CA</SelectItem>
-                    <SelectItem value="verify-full">Verify Full</SelectItem>
-                  </SelectContent>
-                </Select>
                 <p className="text-sm text-muted-foreground">
-                  Configure SSL/TLS security for the database connection
+                  Your Supabase project URL (e.g., https://your-project.supabase.co)
                 </p>
               </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="supabase-key">Supabase Anon Key</Label>
+                <Input 
+                  id="supabase-key"
+                  type="password"
+                  placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  value={supabaseKey}
+                  onChange={(e) => setSupabaseKey(e.target.value)}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Your Supabase anon/public key (starts with eyJ...)
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="supabase-service-role">Supabase Service Role Key (Optional)</Label>
+                <Input 
+                  id="supabase-service-role"
+                  type="password"
+                  placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  value={supabaseServiceRole}
+                  onChange={(e) => setSupabaseServiceRole(e.target.value)}
+                />
+                <p className="text-sm text-muted-foreground">
+                  For admin operations. Only use if needed for specific functionality.
+                </p>
+              </div>
+              
+              <Alert className="bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-900">
+                <div className="flex items-center gap-2">
+                  <Shield className="h-4 w-4 text-blue-500" />
+                  <AlertDescription className="text-blue-600 dark:text-blue-400">
+                    Supabase keys are stored securely and only used for database operations.
+                  </AlertDescription>
+                </div>
+              </Alert>
             </div>
+          ) : (
+            <>
+              {/* Connection Method Toggle - Only for non-Supabase databases */}
+              <div className="space-y-2">
+                <Label>Connection Method</Label>
+                <RadioGroup 
+                  defaultValue={useConnectionString ? "string" : "fields"}
+                  onValueChange={(value) => setUseConnectionString(value === "string")}
+                  className="flex flex-col space-y-1"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="string" id="connection-string" />
+                    <Label htmlFor="connection-string">Connection String</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="fields" id="connection-fields" />
+                    <Label htmlFor="connection-fields">Individual Fields</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+              
+              {useConnectionString ? (
+                <div className="space-y-2">
+                  <Label htmlFor="connection-string-input">Connection String</Label>
+                  <Input 
+                    id="connection-string-input"
+                    type="password"
+                    placeholder="postgresql://username:password@localhost:5432/database"
+                    value={connectionString}
+                    onChange={(e) => setConnectionString(e.target.value)}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Enter the full connection string for your database
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="db-host">Host</Label>
+                      <Input 
+                        id="db-host"
+                        placeholder="localhost"
+                        value={dbHost}
+                        onChange={(e) => setDbHost(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="db-port">Port</Label>
+                      <Input 
+                        id="db-port"
+                        placeholder="5432"
+                        value={dbPort}
+                        onChange={(e) => setDbPort(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="db-name">Database Name</Label>
+                    <Input 
+                      id="db-name"
+                      placeholder="mydatabase"
+                      value={dbName}
+                      onChange={(e) => setDbName(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="db-username">Username</Label>
+                      <Input 
+                        id="db-username"
+                        placeholder="username"
+                        value={dbUsername}
+                        onChange={(e) => setDbUsername(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="db-password">Password</Label>
+                      <Input 
+                        id="db-password"
+                        type="password"
+                        placeholder="••••••••"
+                        value={dbPassword}
+                        onChange={(e) => setDbPassword(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="ssl-mode">SSL Mode</Label>
+                    <Select 
+                      value={sslMode} 
+                      onValueChange={setSslMode}
+                    >
+                      <SelectTrigger id="ssl-mode">
+                        <SelectValue placeholder="Select SSL mode" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="disable">Disable</SelectItem>
+                        <SelectItem value="allow">Allow</SelectItem>
+                        <SelectItem value="prefer">Prefer</SelectItem>
+                        <SelectItem value="require">Require</SelectItem>
+                        <SelectItem value="verify-ca">Verify CA</SelectItem>
+                        <SelectItem value="verify-full">Verify Full</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-sm text-muted-foreground">
+                      Configure SSL/TLS security for the database connection
+                    </p>
+                  </div>
+                </div>
+              )}
+            </>
           )}
           
           <Separator className="my-4" />
@@ -241,13 +307,19 @@ export function DatabaseConnectionSettings() {
             <Button 
               variant="outline" 
               onClick={() => {
-                setConnectionString("")
-                setDbHost("localhost")
-                setDbPort("5432")
-                setDbUsername("")
-                setDbPassword("")
-                setDbName("")
-                setSslMode("require")
+                if (isSupabase) {
+                  setSupabaseUrl("")
+                  setSupabaseKey("")
+                  setSupabaseServiceRole("")
+                } else {
+                  setConnectionString("")
+                  setDbHost("localhost")
+                  setDbPort("5432")
+                  setDbUsername("")
+                  setDbPassword("")
+                  setDbName("")
+                  setSslMode("require")
+                }
                 setConnectionStatus("idle")
               }}
             >

@@ -1,6 +1,7 @@
 
 import Head from "next/head"
 import { useState, useEffect } from "react"
+import dynamic from "next/dynamic"
 import { 
   Grid3X3, 
   LayoutList, 
@@ -37,21 +38,12 @@ import { TrendsAnalysis } from "@/components/news/TrendsAnalysis"
 import { CrossDomainInsights } from "@/components/news/CrossDomainInsights"
 import { CollaborativeAnnotation } from "@/components/news/CollaborativeAnnotation"
 
-export default function NewsPage() {
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
-  const [articles, setArticles] = useState<Article[]>(mockArticles)
-  const [dailySummary] = useState(mockDailySummary)
-  const [activeArticle, setActiveArticle] = useState<Article | null>(null)
-  const [isRefreshing, setIsRefreshing] = useState(false)
-  const [lastUpdated, setLastUpdated] = useState(new Date())
+// Client-side only component to prevent hydration errors
+const LastUpdatedInfo = dynamic(() => Promise.resolve(({ date }: { date: Date }) => {
   const [formattedTime, setFormattedTime] = useState("")
   const [formattedDate, setFormattedDate] = useState("")
-  const [insightsTimeframe, setInsightsTimeframe] = useState<"day" | "week" | "month" | "quarter">("week")
 
-  // Format the last updated time in a consistent way
   useEffect(() => {
-    if (typeof window === "undefined") return; // Skip on server-side
-    
     // Format time consistently for client-side only
     const formatTime = (date: Date) => {
       const hours = date.getUTCHours().toString().padStart(2, '0')
@@ -68,9 +60,25 @@ export default function NewsPage() {
       return `${year}-${month}-${day}`
     }
 
-    setFormattedTime(formatTime(lastUpdated))
-    setFormattedDate(formatDate(lastUpdated))
-  }, [lastUpdated])
+    setFormattedTime(formatTime(date))
+    setFormattedDate(formatDate(date))
+  }, [date])
+
+  return (
+    <div className="text-xs text-muted-foreground">
+      Last updated: {formattedTime} · {formattedDate}
+    </div>
+  )
+}), { ssr: false })
+
+export default function NewsPage() {
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
+  const [articles, setArticles] = useState<Article[]>(mockArticles)
+  const [dailySummary] = useState(mockDailySummary)
+  const [activeArticle, setActiveArticle] = useState<Article | null>(null)
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [lastUpdated, setLastUpdated] = useState(new Date())
+  const [insightsTimeframe, setInsightsTimeframe] = useState<"day" | "week" | "month" | "quarter">("week")
 
   // Toggle bookmark status
   const toggleBookmark = (articleId: string) => {
@@ -150,12 +158,8 @@ export default function NewsPage() {
           </div>
         </div>
 
-        {/* Prevent hydration error by only showing when client-side */}
-        {typeof window !== "undefined" && (
-          <div className="text-xs text-muted-foreground">
-            Last updated: {formattedTime} · {formattedDate}
-          </div>
-        )}
+        {/* Client-side only component to prevent hydration errors */}
+        <LastUpdatedInfo date={lastUpdated} />
 
         <Tabs defaultValue="all">
           <div className="flex items-center justify-between">
