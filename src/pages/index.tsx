@@ -279,7 +279,7 @@ export default function NewsPage() {
                     <Users className="h-12 w-12 text-muted-foreground" />
                     <h3 className="mt-4 text-lg font-medium">Select an article for collaborative annotation</h3>
                     <p className="mt-2 text-sm text-muted-foreground">
-                      Click "Read More" on any article to add comments and tags for team collaboration
+                      Click &quot;Read More&quot; on any article to add comments and tags for team collaboration
                     </p>
                   </CardContent>
                 </Card>
