@@ -13,13 +13,7 @@ type MockQueryResult<T> = {
   error: any | null;
 };
 
-interface MockQueryBuilder<T> {
-  select: (columns?: string) => MockFilterBuilder<T[]>;
-  insert: (data: any) => Promise<MockQueryResult<T>>;
-  update: (data: any) => MockFilterBuilder<T>;
-  delete: () => MockFilterBuilder<T>;
-}
-
+// Simplified mock interfaces to avoid recursive type issues
 interface MockFilterBuilder<T> {
   eq: (column: string, value: any) => MockFilterBuilder<T>;
   lt: (column: string, value: any) => MockFilterBuilder<T>;
@@ -27,6 +21,13 @@ interface MockFilterBuilder<T> {
   order: (column: string, options?: { ascending: boolean }) => MockFilterBuilder<T>;
   limit: (count: number) => MockFilterBuilder<T>;
   then: (onfulfilled?: ((value: MockQueryResult<T>) => any)) => Promise<any>;
+}
+
+interface MockQueryBuilder<T> {
+  select: (columns?: string) => MockFilterBuilder<T[]>;
+  insert: (data: any) => Promise<MockQueryResult<T>>;
+  update: (data: any) => MockFilterBuilder<T>;
+  delete: () => MockFilterBuilder<T>;
 }
 
 // Define a type for our mock client that matches the structure we use
@@ -38,13 +39,14 @@ interface MockSupabaseClient {
 const createMockFilterBuilder = <T>(): MockFilterBuilder<T> => {
   const result: MockQueryResult<T> = { data: null, error: null };
   
-  const builder: MockFilterBuilder<T> = {
+  const builder = {
     eq: () => builder,
     lt: () => builder,
     or: () => builder,
     order: () => builder,
     limit: () => builder,
-    then: (onfulfilled) => Promise.resolve(onfulfilled ? onfulfilled(result) : result)
+    then: (onfulfilled?: ((value: MockQueryResult<T>) => any)) => 
+      Promise.resolve(onfulfilled ? onfulfilled(result) : result)
   };
   
   return builder;
@@ -112,7 +114,7 @@ export const getPromptLogs = async (
   provider?: "perplexity" | "openai" | "anthropic"
 ): Promise<PromptLog[]> => {
   try {
-    let query = supabase
+    let query: any = supabase
       .from("prompt_logs")
       .select("*");
     
@@ -152,7 +154,7 @@ export const updatePromptLogArticleCount = async (
   articleCount: number
 ): Promise<void> => {
   try {
-    const query = supabase
+    let query: any = supabase
       .from("prompt_logs")
       .update({ articleCount });
     
@@ -184,7 +186,7 @@ export const deleteOldPromptLogs = async (
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
     
-    const query = supabase
+    let query: any = supabase
       .from("prompt_logs")
       .delete();
     
@@ -214,7 +216,7 @@ export const searchPromptLogs = async (
   limit: number = 50
 ): Promise<PromptLog[]> => {
   try {
-    let query = supabase
+    let query: any = supabase
       .from("prompt_logs")
       .select("*");
     
