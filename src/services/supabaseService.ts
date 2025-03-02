@@ -1,29 +1,54 @@
 
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { PromptLog } from "@/types/settings";
+import { PostgrestFilterBuilder, PostgrestQueryBuilder } from "@supabase/postgrest-js";
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
+// Define types for our mock client's query builders
+type MockQueryResult<T> = {
+  data: T | null;
+  error: any | null;
+};
+
+interface MockQueryBuilder<T> {
+  select: (columns?: string) => MockFilterBuilder<T[]>;
+  insert: (data: any) => Promise<MockQueryResult<T>>;
+  update: (data: any) => MockFilterBuilder<T>;
+  delete: () => MockFilterBuilder<T>;
+}
+
+interface MockFilterBuilder<T> {
+  eq: (column: string, value: any) => MockFilterBuilder<T>;
+  lt: (column: string, value: any) => MockFilterBuilder<T>;
+  or: (conditions: string) => MockFilterBuilder<T>;
+  order: (column: string, options?: { ascending: boolean }) => MockFilterBuilder<T>;
+  limit: (count: number) => MockFilterBuilder<T>;
+  then: (onfulfilled?: ((value: MockQueryResult<T>) => any)) => Promise<any>;
+}
+
 // Define a type for our mock client that matches the structure we use
 interface MockSupabaseClient {
-  from: (table: string) => {
-    insert: (data: any) => Promise<{ data: any | null; error: any | null }>;
-    select: (columns?: string) => Promise<{ data: any[] | null; error: any | null }>;
-    update: (data: any) => Promise<{ data: any | null; error: any | null }>;
-    delete: () => Promise<{ data: any | null; error: any | null }>;
-    eq: (column: string, value: any) => { data: any[] | null; error: any | null };
-    lt: (column: string, value: any) => { data: any[] | null; error: any | null };
-    or: (conditions: string) => { data: any[] | null; error: any | null };
-    order: (column: string, options?: { ascending: boolean }) => { 
-      data: any[] | null; 
-      error: any | null;
-      limit: (count: number) => { data: any[] | null; error: any | null };
-    };
-    limit: (count: number) => { data: any[] | null; error: any | null };
-  };
+  from: (table: string) => MockQueryBuilder<any>;
 }
+
+// Create a mock filter builder that returns itself for chaining
+const createMockFilterBuilder = <T>(): MockFilterBuilder<T> => {
+  const result: MockQueryResult<T> = { data: null, error: null };
+  
+  const builder: MockFilterBuilder<T> = {
+    eq: () => builder,
+    lt: () => builder,
+    or: () => builder,
+    order: () => builder,
+    limit: () => builder,
+    then: (onfulfilled) => Promise.resolve(onfulfilled ? onfulfilled(result) : result)
+  };
+  
+  return builder;
+};
 
 // Create a fallback client if environment variables are not set
 let supabase: SupabaseClient | MockSupabaseClient;
@@ -33,17 +58,12 @@ try {
     console.warn("Supabase URL or key is missing. Using mock mode for development.");
     // Create a mock client for development
     supabase = {
-      from: () => ({
+      from: (table: string): MockQueryBuilder<any> => ({
+        select: () => createMockFilterBuilder<any[]>(),
         insert: async () => ({ data: null, error: null }),
-        select: async () => ({ data: [], error: null }),
-        update: async () => ({ data: null, error: null }),
-        delete: async () => ({ data: null, error: null }),
-        eq: () => ({ data: [], error: null }),
-        lt: () => ({ data: [], error: null }),
-        or: () => ({ data: [], error: null }),
-        order: () => ({ data: [], error: null, limit: () => ({ data: [], error: null }) }),
-        limit: () => ({ data: [], error: null }),
-      }),
+        update: () => createMockFilterBuilder<any>(),
+        delete: () => createMockFilterBuilder<any>()
+      })
     };
   } else {
     supabase = createClient(supabaseUrl, supabaseKey);
@@ -52,17 +72,12 @@ try {
   console.error("Failed to initialize Supabase client:", error);
   // Fallback to mock client
   supabase = {
-    from: () => ({
+    from: (table: string): MockQueryBuilder<any> => ({
+      select: () => createMockFilterBuilder<any[]>(),
       insert: async () => ({ data: null, error: null }),
-      select: async () => ({ data: [], error: null }),
-      update: async () => ({ data: null, error: null }),
-      delete: async () => ({ data: null, error: null }),
-      eq: () => ({ data: [], error: null }),
-      lt: () => ({ data: [], error: null }),
-      or: () => ({ data: [], error: null }),
-      order: () => ({ data: [], error: null, limit: () => ({ data: [], error: null }) }),
-      limit: () => ({ data: [], error: null }),
-    }),
+      update: () => createMockFilterBuilder<any>(),
+      delete: () => createMockFilterBuilder<any>()
+    })
   };
 }
 
@@ -99,12 +114,20 @@ export const getPromptLogs = async (
   try {
     let query = supabase
       .from("prompt_logs")
-      .select("*")
-      .order("timestamp", { ascending: false })
-      .limit(limit);
+      .select("*");
     
     if (provider) {
-      query = query.eq("provider", provider);
+      if ('eq' in query) {
+        query = query.eq("provider", provider);
+      }
+    }
+    
+    if ('order' in query) {
+      query = query.order("timestamp", { ascending: false });
+    }
+    
+    if ('limit' in query) {
+      query = query.limit(limit);
     }
     
     const { data, error } = await query;
@@ -129,10 +152,15 @@ export const updatePromptLogArticleCount = async (
   articleCount: number
 ): Promise<void> => {
   try {
-    const { error } = await supabase
+    const query = supabase
       .from("prompt_logs")
-      .update({ articleCount })
-      .eq("id", logId);
+      .update({ articleCount });
+    
+    if ('eq' in query) {
+      query = query.eq("id", logId);
+    }
+    
+    const { error } = await query;
     
     if (error) {
       throw error;
@@ -156,10 +184,15 @@ export const deleteOldPromptLogs = async (
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
     
-    const { error } = await supabase
+    const query = supabase
       .from("prompt_logs")
-      .delete()
-      .lt("timestamp", cutoffDate.toISOString());
+      .delete();
+    
+    if ('lt' in query) {
+      query = query.lt("timestamp", cutoffDate.toISOString());
+    }
+    
+    const { error } = await query;
     
     if (error) {
       throw error;
@@ -181,12 +214,23 @@ export const searchPromptLogs = async (
   limit: number = 50
 ): Promise<PromptLog[]> => {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from("prompt_logs")
-      .select("*")
-      .or(`originalPrompt.ilike.%${searchTerm}%,enhancedPrompt.ilike.%${searchTerm}%`)
-      .order("timestamp", { ascending: false })
-      .limit(limit);
+      .select("*");
+    
+    if ('or' in query) {
+      query = query.or(`originalPrompt.ilike.%${searchTerm}%,enhancedPrompt.ilike.%${searchTerm}%`);
+    }
+    
+    if ('order' in query) {
+      query = query.order("timestamp", { ascending: false });
+    }
+    
+    if ('limit' in query) {
+      query = query.limit(limit);
+    }
+    
+    const { data, error } = await query;
     
     if (error) {
       throw error;
