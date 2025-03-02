@@ -1,5 +1,5 @@
 
-import { NewsSettings } from "@/types/settings";
+import { NewsSettings, PromptLog } from "@/types/settings";
 
 /**
  * Enhances a base prompt with context from the vector database
@@ -14,6 +14,11 @@ export const enhancePrompt = async (
     
     // Combine base prompt with context
     const enhancedPrompt = createEnhancedPrompt(basePrompt, context, settings);
+    
+    // Log the prompt if logging is enabled
+    if (settings.enablePromptLogging) {
+      logPrompt(basePrompt, enhancedPrompt, settings);
+    }
     
     return enhancedPrompt;
   } catch (error) {
@@ -100,4 +105,71 @@ const createEnhancedPrompt = (
 export const getDefaultBasePrompt = (settings: NewsSettings): string => {
   return settings.basePrompt || 
     "Find the latest news articles relevant to our company and industry. Focus on recent developments, market trends, competitor activities, and regulatory changes that might impact our business.";
+};
+
+/**
+ * Logs a prompt for future reference
+ */
+const logPrompt = (
+  originalPrompt: string,
+  enhancedPrompt: string,
+  settings: NewsSettings,
+  provider: "perplexity" | "openai" | "anthropic" = "perplexity"
+): void => {
+  // In a real implementation, this would store the prompt in a database
+  // For now, we'll just log to console
+  
+  const promptLog: PromptLog = {
+    id: Date.now().toString(),
+    timestamp: new Date().toISOString(),
+    originalPrompt,
+    enhancedPrompt,
+    provider,
+    articleCount: 0, // This would be updated after receiving results
+    status: "success"
+  };
+  
+  console.log("Prompt logged:", promptLog);
+  
+  // In a real implementation, you would save this to a database
+  // savePromptLog(promptLog);
+};
+
+/**
+ * Retrieves prompt logs from storage
+ */
+export const getPromptLogs = async (
+  limit: number = 50,
+  provider?: "perplexity" | "openai" | "anthropic"
+): Promise<PromptLog[]> => {
+  // In a real implementation, this would fetch logs from a database
+  // For now, return mock data
+  
+  // Mock implementation
+  const mockLogs: PromptLog[] = [
+    {
+      id: "1",
+      timestamp: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
+      originalPrompt: "Find news about HPC innovations in the last week",
+      enhancedPrompt: "Enhanced prompt with context...",
+      provider: "perplexity",
+      articleCount: 12,
+      status: "success"
+    },
+    {
+      id: "2",
+      timestamp: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+      originalPrompt: "Latest developments in Bitcoin mining efficiency",
+      enhancedPrompt: "Enhanced prompt with context...",
+      provider: "perplexity",
+      articleCount: 8,
+      status: "success"
+    }
+  ];
+  
+  if (provider) {
+    return mockLogs.filter(log => log.provider === provider).slice(0, limit);
+  }
+  
+  return mockLogs.slice(0, limit);
 };

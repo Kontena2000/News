@@ -45,10 +45,25 @@ export interface NewsSettings {
   dbConnectionString?: string;
   dbEnabled?: boolean;
   dbType?: "postgres" | "mysql" | "mongodb";
+  
+  // Prompt Logging
+  enablePromptLogging?: boolean;
+  promptLogRetentionDays?: number;
 }
 
 export interface SettingsState {
   settings: NewsSettings;
   isLoading: boolean;
   error: string | null;
+}
+
+export interface PromptLog {
+  id: string;
+  timestamp: string;
+  originalPrompt: string;
+  enhancedPrompt: string;
+  provider: "perplexity" | "openai" | "anthropic";
+  articleCount: number;
+  status: "success" | "error";
+  errorMessage?: string;
 }

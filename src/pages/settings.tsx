@@ -5,7 +5,8 @@ import {
   Globe,
   Sparkles,
   Wrench,
-  Info
+  Info,
+  BrainCircuit
 } from "lucide-react"
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -14,6 +15,7 @@ import { SourceSettings } from "@/components/settings/SourceSettings"
 import { SummarizationSettings } from "@/components/settings/SummarizationSettings"
 import { AdvancedSettings } from "@/components/settings/AdvancedSettings"
 import { PipelineOverview } from "@/components/settings/PipelineOverview"
+import { ReasoningSettings } from "@/components/settings/ReasoningSettings"
 
 export default function SettingsPage() {
   return (
@@ -35,7 +37,7 @@ export default function SettingsPage() {
         </div>
 
         <Tabs defaultValue="prompt" className="space-y-4">
-          <TabsList className="grid grid-cols-2 md:grid-cols-5">
+          <TabsList className="grid grid-cols-2 md:grid-cols-6">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <Info className="h-4 w-4" />
               <span className="hidden md:inline">Overview</span>
@@ -51,6 +53,10 @@ export default function SettingsPage() {
             <TabsTrigger value="summarization" className="flex items-center gap-2">
               <Sparkles className="h-4 w-4" />
               <span className="hidden md:inline">Summarization</span>
+            </TabsTrigger>
+            <TabsTrigger value="reasoning" className="flex items-center gap-2">
+              <BrainCircuit className="h-4 w-4" />
+              <span className="hidden md:inline">Reasoning</span>
             </TabsTrigger>
             <TabsTrigger value="advanced" className="flex items-center gap-2">
               <Wrench className="h-4 w-4" />
@@ -76,6 +82,11 @@ export default function SettingsPage() {
           {/* Summarization Controls */}
           <TabsContent value="summarization">
             <SummarizationSettings />
+          </TabsContent>
+
+          {/* Reasoning & Prompt Logs */}
+          <TabsContent value="reasoning">
+            <ReasoningSettings />
           </TabsContent>
 
           {/* Advanced Configuration */}
