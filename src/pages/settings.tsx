@@ -8,7 +8,8 @@ import {
   Sparkles,
   Wrench,
   Star,
-  X
+  X,
+  Plus
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -32,6 +33,32 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 export default function SettingsPage() {
   const [resultsLimit, setResultsLimit] = useState(50)
+  const [newBranch, setNewBranch] = useState("")
+  const [branches, setBranches] = useState([
+    { id: "1", name: "HPC", maxArticles: 20 },
+    { id: "2", name: "Bitcoin", maxArticles: 15 },
+    { id: "3", name: "Energy Storage", maxArticles: 25 }
+  ])
+  
+  const handleAddBranch = () => {
+    if (newBranch.trim()) {
+      setBranches([
+        ...branches,
+        { id: Date.now().toString(), name: newBranch.trim(), maxArticles: 20 }
+      ])
+      setNewBranch("")
+    }
+  }
+  
+  const handleRemoveBranch = (id: string) => {
+    setBranches(branches.filter(branch => branch.id !== id))
+  }
+  
+  const handleMaxArticlesChange = (id: string, value: number) => {
+    setBranches(branches.map(branch => 
+      branch.id === id ? { ...branch, maxArticles: value } : branch
+    ))
+  }
   
   const kontenaPrompt = `*Goal:*  
 You are a smart AI Assistant capable of identifying and estimating which topics are of high priority to Kontena. Your objective is to determine subjects with high importance and significance for creating business opportunities and understanding the HPC, Bitcoin, and energy storage sectors in which Kontena operates.  
@@ -60,35 +87,31 @@ Kontena's key strengths include:
 
 We seek topics that enhance our market position, provide competitive advantages, and align with our vision of revolutionizing HPC and energy storage through innovative modular solutions.`
 
-  const summarizationPrompt = `*Goal:*
-You are an expert summarizer capable of condensing complex news articles into clear, concise summaries. Your objective is to extract the most important information and present it in a way that is easy to understand while preserving the key points.
-
----
-
-*Return Format:*
-Provide a concise summary of 2-3 paragraphs that captures the essential information from the article. Focus on the main points, key facts, and significant implications.
-
----
-
-*Guidelines:*
-- Maintain objectivity and avoid inserting opinions
-- Preserve the original meaning and context
-- Highlight the most important facts and developments
-- Include relevant statistics, quotes, or data points when critical
-- Omit unnecessary details, background information, or tangential points
-- Use clear, straightforward language
-
----
-
-*Structure:*
-1. First paragraph: Core news/announcement and primary details
-2. Second paragraph: Supporting information, context, and implications
-3. Third paragraph (if needed): Additional relevant details or future outlook`
+  const summarizationPrompt = `Below is a collection of articles from our database. Each article has metadata fields such as title, source, date, overall_score, business_area, key_innovations, relevance_factors, kontena_opportunity, and keywords. Summarize all of these articles into concise bullet points, focusing on HPC, Bitcoin mining, and Energy Storage news. If articles mention heat recovery, immersion cooling, battery technology, or other high-priority innovations, include them in the summary. Omit generic or unrelated content.
+Context:
+Kontena specializes in modular HPC data centers, sustainable Bitcoin mining, and energy storage solutions.
+Articles are already filtered for technical innovation, business impact, and sustainability.
+Summaries should highlight any synergy or business opportunity for Kontena.
+If multiple articles share the same theme (e.g., immersion cooling), group them together under a single bullet point for clarity.
+Output Format:
+Overall Summary (2-3 sentences): A top-level overview of the main themes and trends.
+Key Highlights (Bulleted List): Summaries of each relevant article, grouped by business area (HPC, Bitcoin, Energy Storage).
+For each bullet:
+Mention the article title or a short reference.
+Briefly state the main insight or innovation.
+Note any synergy with Kontena's focus on modular solutions, sustainability, or heat recovery.
+Notable Opportunities (Optional): List 2-3 cross-cutting opportunities for Kontena if applicable.
+Database Content:
+{INSERT YOUR ARTICLES HERE IN A STRUCTURED FORMAT}
+Remember:
+Keep your response concise, but with enough detail to understand the significance of each article.
+Combine or group articles covering the same theme.
+Do not output chain-of-thought; just provide the final summaries and any relevant context for Kontena.`
 
   return (
     <>
       <Head>
-        <title>Settings - ZORK News Scraper</title>
+        <title>Settings - News Scraper</title>
         <meta name="description" content="Configure your news scraper settings" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
@@ -98,7 +121,7 @@ Provide a concise summary of 2-3 paragraphs that captures the essential informat
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
             <p className="text-muted-foreground">
-              Configure how the ZORK News Scraper collects and processes news
+              Configure how the News Scraper collects and processes news
             </p>
           </div>
         </div>
@@ -203,11 +226,71 @@ Provide a concise summary of 2-3 paragraphs that captures the essential informat
                       Maximum number of articles to collect per update (10-100)
                     </p>
                   </div>
+                  
+                  {/* Company Branches Section */}
+                  <div className="space-y-4 pt-4 border-t">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-base font-medium">Company Branches</Label>
+                    </div>
+                    <div className="space-y-4">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Branch Name</TableHead>
+                            <TableHead>Max Articles</TableHead>
+                            <TableHead className="w-[100px]">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {branches.map((branch) => (
+                            <TableRow key={branch.id}>
+                              <TableCell>{branch.name}</TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <Slider 
+                                    defaultValue={[branch.maxArticles]} 
+                                    max={50} 
+                                    min={5} 
+                                    step={5}
+                                    onValueChange={(value) => handleMaxArticlesChange(branch.id, value[0])}
+                                    className="w-32"
+                                  />
+                                  <span className="text-sm">{branch.maxArticles}</span>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => handleRemoveBranch(branch.id)}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                      <div className="flex items-center space-x-2">
+                        <Input 
+                          placeholder="Enter new branch name" 
+                          className="flex-1" 
+                          value={newBranch}
+                          onChange={(e) => setNewBranch(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && handleAddBranch()}
+                        />
+                        <Button onClick={handleAddBranch}>
+                          <Plus className="mr-2 h-4 w-4" />
+                          Add Branch
+                        </Button>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Configure company branches (e.g., HPC, Bitcoin, Energy Storage) and set maximum articles per branch
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
-              <CardFooter className="flex justify-between">
-                <Button variant="outline">Reset to Defaults</Button>
-              </CardFooter>
             </Card>
           </TabsContent>
 
@@ -419,9 +502,6 @@ Provide a concise summary of 2-3 paragraphs that captures the essential informat
                   </AccordionItem>
                 </Accordion>
               </CardContent>
-              <CardFooter className="flex justify-between">
-                <Button variant="outline">Reset to Defaults</Button>
-              </CardFooter>
             </Card>
           </TabsContent>
 
@@ -441,7 +521,7 @@ Provide a concise summary of 2-3 paragraphs that captures the essential informat
                     <Textarea 
                       id="summarization-prompt"
                       placeholder="Enter your summarization prompt"
-                      className="min-h-[200px] font-mono text-sm"
+                      className="min-h-[300px] font-mono text-sm"
                       defaultValue={summarizationPrompt}
                     />
                     <p className="text-sm text-muted-foreground">
@@ -504,9 +584,6 @@ Provide a concise summary of 2-3 paragraphs that captures the essential informat
                   </div>
                 </div>
               </CardContent>
-              <CardFooter className="flex justify-between">
-                <Button variant="outline">Reset to Defaults</Button>
-              </CardFooter>
             </Card>
           </TabsContent>
 
@@ -572,9 +649,6 @@ Provide a concise summary of 2-3 paragraphs that captures the essential informat
                   </div>
                 </div>
               </CardContent>
-              <CardFooter className="flex justify-between">
-                <Button variant="outline">Reset to Defaults</Button>
-              </CardFooter>
             </Card>
           </TabsContent>
         </Tabs>
