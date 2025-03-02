@@ -1,6 +1,6 @@
 
-import { useState } from "react"
-import { Clock, Copy, ExternalLink, Eye, EyeOff, Search } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Clock, Copy, ExternalLink, Eye, EyeOff, Search, Loader2 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,120 +9,71 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
-
-// Mock data for prompt logs
-const mockPromptLogs = [
-  {
-    id: "1",
-    timestamp: "2025-03-02T06:15:00Z",
-    originalPrompt: "Find news about HPC innovations in the last week",
-    enhancedPrompt: `CONTEXT:
-      Company Name: Kontena
-      Industry: Technology, HPC, Bitcoin, Energy Storage
-      Key Products: Modular HPC solutions, Bitcoin mining infrastructure, Energy storage systems
-      Competitors: Traditional HPC providers, Bitcoin mining companies
-      Interests: HPC innovations, energy efficiency, modular solutions
-    
-    BASE PROMPT:
-    Find news about HPC innovations in the last week
-    
-    Please return the results as a JSON array of news articles with the following structure:
-    [
-      {
-        "title": "Article Title",
-        "summary": "Brief summary of the article",
-        "content": "Full content of the article",
-        "url": "URL to the original article",
-        "source": "Source name",
-        "sourceUrl": "URL of the source",
-        "imageUrl": "URL to an image for the article",
-        "publishedAt": "Publication date in ISO format",
-        "category": "Article category",
-        "tags": ["tag1", "tag2", "tag3"]
-      }
-    ]`,
-    provider: "perplexity",
-    articleCount: 12,
-    status: "success"
-  },
-  {
-    id: "2",
-    timestamp: "2025-03-01T18:30:00Z",
-    originalPrompt: "Latest developments in Bitcoin mining efficiency",
-    enhancedPrompt: `CONTEXT:
-      Company Name: Kontena
-      Industry: Technology, HPC, Bitcoin, Energy Storage
-      Key Products: Modular HPC solutions, Bitcoin mining infrastructure, Energy storage systems
-      Competitors: Traditional HPC providers, Bitcoin mining companies
-      Interests: HPC innovations, energy efficiency, modular solutions
-    
-    BASE PROMPT:
-    Latest developments in Bitcoin mining efficiency
-    
-    Please return the results as a JSON array of news articles with the following structure:
-    [
-      {
-        "title": "Article Title",
-        "summary": "Brief summary of the article",
-        "content": "Full content of the article",
-        "url": "URL to the original article",
-        "source": "Source name",
-        "sourceUrl": "URL of the source",
-        "imageUrl": "URL to an image for the article",
-        "publishedAt": "Publication date in ISO format",
-        "category": "Article category",
-        "tags": ["tag1", "tag2", "tag3"]
-      }
-    ]`,
-    provider: "perplexity",
-    articleCount: 8,
-    status: "success"
-  },
-  {
-    id: "3",
-    timestamp: "2025-02-28T09:45:00Z",
-    originalPrompt: "Energy storage breakthroughs for data centers",
-    enhancedPrompt: `CONTEXT:
-      Company Name: Kontena
-      Industry: Technology, HPC, Bitcoin, Energy Storage
-      Key Products: Modular HPC solutions, Bitcoin mining infrastructure, Energy storage systems
-      Competitors: Traditional HPC providers, Bitcoin mining companies
-      Interests: HPC innovations, energy efficiency, modular solutions
-    
-    BASE PROMPT:
-    Energy storage breakthroughs for data centers
-    
-    Please return the results as a JSON array of news articles with the following structure:
-    [
-      {
-        "title": "Article Title",
-        "summary": "Brief summary of the article",
-        "content": "Full content of the article",
-        "url": "URL to the original article",
-        "source": "Source name",
-        "sourceUrl": "URL of the source",
-        "imageUrl": "URL to an image for the article",
-        "publishedAt": "Publication date in ISO format",
-        "category": "Article category",
-        "tags": ["tag1", "tag2", "tag3"]
-      }
-    ]`,
-    provider: "perplexity",
-    articleCount: 15,
-    status: "success"
-  }
-];
+import { getPromptLogs } from "@/services/promptService"
+import { searchPromptLogs } from "@/services/supabaseService"
+import { PromptLog } from "@/types/settings"
 
 export function ReasoningSettings() {
   const [searchQuery, setSearchQuery] = useState("")
-  const [selectedPrompt, setSelectedPrompt] = useState<typeof mockPromptLogs[0] | null>(null)
+  const [selectedPrompt, setSelectedPrompt] = useState<PromptLog | null>(null)
   const [showFullPrompts, setShowFullPrompts] = useState(false)
+  const [promptLogs, setPromptLogs] = useState<PromptLog[]>([])
+  const [filteredLogs, setFilteredLogs] = useState<PromptLog[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState("all")
+  
+  // Fetch prompt logs on component mount
+  useEffect(() => {
+    fetchPromptLogs();
+  }, [activeTab]);
+  
+  // Filter logs when search query or active tab changes
+  useEffect(() => {
+    filterLogs();
+  }, [searchQuery, promptLogs]);
+  
+  // Fetch prompt logs from the service
+  const fetchPromptLogs = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const provider = activeTab !== "all" ? activeTab as "perplexity" | "openai" | "anthropic" : undefined;
+      const logs = await getPromptLogs(50, provider);
+      setPromptLogs(logs);
+      setFilteredLogs(logs);
+    } catch (err) {
+      console.error("Error fetching prompt logs:", err);
+      setError("Failed to load prompt logs. Please try again later.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   // Filter logs based on search query
-  const filteredLogs = mockPromptLogs.filter(log => 
-    log.originalPrompt.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    log.enhancedPrompt.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filterLogs = async () => {
+    if (!searchQuery.trim()) {
+      setFilteredLogs(promptLogs);
+      return;
+    }
+    
+    try {
+      const results = await searchPromptLogs(searchQuery);
+      const filtered = activeTab === "all" 
+        ? results 
+        : results.filter(log => log.provider === activeTab);
+      setFilteredLogs(filtered);
+    } catch (err) {
+      console.error("Error searching prompt logs:", err);
+      // Fall back to client-side filtering if search fails
+      const filtered = promptLogs.filter(log => 
+        (activeTab === "all" || log.provider === activeTab) &&
+        (log.originalPrompt.toLowerCase().includes(searchQuery.toLowerCase()) ||
+         log.enhancedPrompt.toLowerCase().includes(searchQuery.toLowerCase()))
+      );
+      setFilteredLogs(filtered);
+    }
+  };
   
   // Format date for display
   const formatDate = (dateString: string) => {
@@ -140,6 +91,11 @@ export function ReasoningSettings() {
     navigator.clipboard.writeText(text);
     // In a real app, you would show a toast notification here
     alert("Copied to clipboard");
+  };
+  
+  // Handle tab change
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
   };
   
   return (
@@ -176,9 +132,28 @@ export function ReasoningSettings() {
               </>
             )}
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchPromptLogs}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Clock className="mr-2 h-4 w-4" />
+            )}
+            Refresh
+          </Button>
         </div>
         
-        <Tabs defaultValue="all">
+        {error && (
+          <div className="rounded-md bg-destructive/15 p-3 text-destructive">
+            {error}
+          </div>
+        )}
+        
+        <Tabs defaultValue="all" onValueChange={handleTabChange}>
           <TabsList>
             <TabsTrigger value="all">All Providers</TabsTrigger>
             <TabsTrigger value="perplexity">Perplexity</TabsTrigger>
@@ -187,74 +162,23 @@ export function ReasoningSettings() {
           </TabsList>
           
           <TabsContent value="all" className="mt-4">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[180px]">Timestamp</TableHead>
-                  <TableHead>Original Prompt</TableHead>
-                  <TableHead className="w-[100px]">Provider</TableHead>
-                  <TableHead className="w-[100px]">Articles</TableHead>
-                  <TableHead className="w-[100px]">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredLogs.map((log) => (
-                  <TableRow key={log.id}>
-                    <TableCell className="whitespace-nowrap">
-                      <div className="flex items-center">
-                        <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
-                        {formatDate(log.timestamp)}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {showFullPrompts ? (
-                        <div className="whitespace-pre-wrap text-sm">{log.originalPrompt}</div>
-                      ) : (
-                        <div className="truncate max-w-[400px] text-sm">{log.originalPrompt}</div>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{log.provider}</Badge>
-                    </TableCell>
-                    <TableCell>{log.articleCount}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setSelectedPrompt(log)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => copyToClipboard(log.enhancedPrompt)}
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+            {isLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : filteredLogs.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[180px]">Timestamp</TableHead>
+                    <TableHead>Original Prompt</TableHead>
+                    <TableHead className="w-[100px]">Provider</TableHead>
+                    <TableHead className="w-[100px]">Articles</TableHead>
+                    <TableHead className="w-[100px]">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TabsContent>
-          
-          <TabsContent value="perplexity" className="mt-4">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[180px]">Timestamp</TableHead>
-                  <TableHead>Original Prompt</TableHead>
-                  <TableHead className="w-[100px]">Articles</TableHead>
-                  <TableHead className="w-[100px]">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredLogs
-                  .filter(log => log.provider === "perplexity")
-                  .map((log) => (
+                </TableHeader>
+                <TableBody>
+                  {filteredLogs.map((log) => (
                     <TableRow key={log.id}>
                       <TableCell className="whitespace-nowrap">
                         <div className="flex items-center">
@@ -268,6 +192,9 @@ export function ReasoningSettings() {
                         ) : (
                           <div className="truncate max-w-[400px] text-sm">{log.originalPrompt}</div>
                         )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{log.provider}</Badge>
                       </TableCell>
                       <TableCell>{log.articleCount}</TableCell>
                       <TableCell>
@@ -290,20 +217,202 @@ export function ReasoningSettings() {
                       </TableCell>
                     </TableRow>
                   ))}
-              </TableBody>
-            </Table>
+                </TableBody>
+              </Table>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
+                <p>No prompt logs found</p>
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="perplexity" className="mt-4">
+            {isLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : filteredLogs.filter(log => log.provider === "perplexity").length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[180px]">Timestamp</TableHead>
+                    <TableHead>Original Prompt</TableHead>
+                    <TableHead className="w-[100px]">Articles</TableHead>
+                    <TableHead className="w-[100px]">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredLogs
+                    .filter(log => log.provider === "perplexity")
+                    .map((log) => (
+                      <TableRow key={log.id}>
+                        <TableCell className="whitespace-nowrap">
+                          <div className="flex items-center">
+                            <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
+                            {formatDate(log.timestamp)}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {showFullPrompts ? (
+                            <div className="whitespace-pre-wrap text-sm">{log.originalPrompt}</div>
+                          ) : (
+                            <div className="truncate max-w-[400px] text-sm">{log.originalPrompt}</div>
+                          )}
+                        </TableCell>
+                        <TableCell>{log.articleCount}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setSelectedPrompt(log)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => copyToClipboard(log.enhancedPrompt)}
+                            >
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
+                <p>No Perplexity prompt logs found</p>
+              </div>
+            )}
           </TabsContent>
           
           <TabsContent value="openai" className="mt-4">
-            <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
-              <p>No OpenAI prompt logs found</p>
-            </div>
+            {isLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : filteredLogs.filter(log => log.provider === "openai").length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[180px]">Timestamp</TableHead>
+                    <TableHead>Original Prompt</TableHead>
+                    <TableHead className="w-[100px]">Articles</TableHead>
+                    <TableHead className="w-[100px]">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredLogs
+                    .filter(log => log.provider === "openai")
+                    .map((log) => (
+                      <TableRow key={log.id}>
+                        <TableCell className="whitespace-nowrap">
+                          <div className="flex items-center">
+                            <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
+                            {formatDate(log.timestamp)}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {showFullPrompts ? (
+                            <div className="whitespace-pre-wrap text-sm">{log.originalPrompt}</div>
+                          ) : (
+                            <div className="truncate max-w-[400px] text-sm">{log.originalPrompt}</div>
+                          )}
+                        </TableCell>
+                        <TableCell>{log.articleCount}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setSelectedPrompt(log)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => copyToClipboard(log.enhancedPrompt)}
+                            >
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
+                <p>No OpenAI prompt logs found</p>
+              </div>
+            )}
           </TabsContent>
           
           <TabsContent value="anthropic" className="mt-4">
-            <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
-              <p>No Anthropic prompt logs found</p>
-            </div>
+            {isLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : filteredLogs.filter(log => log.provider === "anthropic").length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[180px]">Timestamp</TableHead>
+                    <TableHead>Original Prompt</TableHead>
+                    <TableHead className="w-[100px]">Articles</TableHead>
+                    <TableHead className="w-[100px]">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredLogs
+                    .filter(log => log.provider === "anthropic")
+                    .map((log) => (
+                      <TableRow key={log.id}>
+                        <TableCell className="whitespace-nowrap">
+                          <div className="flex items-center">
+                            <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
+                            {formatDate(log.timestamp)}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {showFullPrompts ? (
+                            <div className="whitespace-pre-wrap text-sm">{log.originalPrompt}</div>
+                          ) : (
+                            <div className="truncate max-w-[400px] text-sm">{log.originalPrompt}</div>
+                          )}
+                        </TableCell>
+                        <TableCell>{log.articleCount}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setSelectedPrompt(log)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => copyToClipboard(log.enhancedPrompt)}
+                            >
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
+                <p>No Anthropic prompt logs found</p>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
         
