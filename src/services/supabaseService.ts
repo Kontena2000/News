@@ -1,7 +1,6 @@
 
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { PromptLog } from "@/types/settings";
-import { PostgrestFilterBuilder, PostgrestQueryBuilder } from "@supabase/postgrest-js";
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
@@ -13,74 +12,73 @@ type MockQueryResult<T> = {
   error: any | null;
 };
 
-// Simplified mock interfaces to avoid recursive type issues
-interface MockFilterBuilder<T> {
-  eq: (column: string, value: any) => MockFilterBuilder<T>;
-  lt: (column: string, value: any) => MockFilterBuilder<T>;
-  or: (conditions: string) => MockFilterBuilder<T>;
-  order: (column: string, options?: { ascending: boolean }) => MockFilterBuilder<T>;
-  limit: (count: number) => MockFilterBuilder<T>;
-  then: (onfulfilled?: ((value: MockQueryResult<T>) => any)) => Promise<any>;
-}
-
-interface MockQueryBuilder<T> {
-  select: (columns?: string) => MockFilterBuilder<T[]>;
-  insert: (data: any) => Promise<MockQueryResult<T>>;
-  update: (data: any) => MockFilterBuilder<T>;
-  delete: () => MockFilterBuilder<T>;
-}
-
-// Define a type for our mock client that matches the structure we use
-interface MockSupabaseClient {
-  from: (table: string) => MockQueryBuilder<any>;
-}
-
-// Create a mock filter builder that returns itself for chaining
-const createMockFilterBuilder = <T>(): MockFilterBuilder<T> => {
-  const result: MockQueryResult<T> = { data: null, error: null };
-  
-  const builder = {
-    eq: () => builder,
-    lt: () => builder,
-    or: () => builder,
-    order: () => builder,
-    limit: () => builder,
-    then: (onfulfilled?: ((value: MockQueryResult<T>) => any)) => 
-      Promise.resolve(onfulfilled ? onfulfilled(result) : result)
-  };
-  
-  return builder;
-};
-
 // Create a fallback client if environment variables are not set
-let supabase: SupabaseClient | MockSupabaseClient;
+let supabase: SupabaseClient | any;
 
 try {
   if (!supabaseUrl || !supabaseKey) {
     console.warn("Supabase URL or key is missing. Using mock mode for development.");
-    // Create a mock client for development
+    
+    // Create a mock client for development with a simpler approach
+    // that avoids recursive type definitions
     supabase = {
-      from: (table: string): MockQueryBuilder<any> => ({
-        select: () => createMockFilterBuilder<any[]>(),
-        insert: async () => ({ data: null, error: null }),
-        update: () => createMockFilterBuilder<any>(),
-        delete: () => createMockFilterBuilder<any>()
-      })
+      from: (table: string) => {
+        // Create a base query object with chainable methods
+        const baseQuery = {
+          // Data manipulation methods
+          select: () => ({ ...baseQuery, then: mockThen }),
+          insert: () => Promise.resolve({ data: null, error: null }),
+          update: () => ({ ...baseQuery, then: mockThen }),
+          delete: () => ({ ...baseQuery, then: mockThen }),
+          
+          // Filter methods
+          eq: () => ({ ...baseQuery, then: mockThen }),
+          lt: () => ({ ...baseQuery, then: mockThen }),
+          or: () => ({ ...baseQuery, then: mockThen }),
+          
+          // Pagination/ordering
+          order: () => ({ ...baseQuery, then: mockThen }),
+          limit: () => ({ ...baseQuery, then: mockThen }),
+          
+          // Promise-like behavior
+          then: mockThen
+        };
+        
+        return baseQuery;
+      }
     };
   } else {
     supabase = createClient(supabaseUrl, supabaseKey);
   }
 } catch (error) {
   console.error("Failed to initialize Supabase client:", error);
-  // Fallback to mock client
+  
+  // Fallback to mock client with same implementation as above
   supabase = {
-    from: (table: string): MockQueryBuilder<any> => ({
-      select: () => createMockFilterBuilder<any[]>(),
-      insert: async () => ({ data: null, error: null }),
-      update: () => createMockFilterBuilder<any>(),
-      delete: () => createMockFilterBuilder<any>()
-    })
+    from: (table: string) => {
+      const baseQuery = {
+        select: () => ({ ...baseQuery, then: mockThen }),
+        insert: () => Promise.resolve({ data: null, error: null }),
+        update: () => ({ ...baseQuery, then: mockThen }),
+        delete: () => ({ ...baseQuery, then: mockThen }),
+        eq: () => ({ ...baseQuery, then: mockThen }),
+        lt: () => ({ ...baseQuery, then: mockThen }),
+        or: () => ({ ...baseQuery, then: mockThen }),
+        order: () => ({ ...baseQuery, then: mockThen }),
+        limit: () => ({ ...baseQuery, then: mockThen }),
+        then: mockThen
+      };
+      
+      return baseQuery;
+    }
   };
+}
+
+// Helper function for mock promise behavior
+function mockThen(onfulfilled?: any) {
+  return Promise.resolve(
+    onfulfilled ? onfulfilled({ data: [], error: null }) : { data: [], error: null }
+  );
 }
 
 export { supabase };
@@ -119,16 +117,16 @@ export const getPromptLogs = async (
       .select("*");
     
     if (provider) {
-      if ('eq' in query) {
+      if (typeof query.eq === 'function') {
         query = query.eq("provider", provider);
       }
     }
     
-    if ('order' in query) {
+    if (typeof query.order === 'function') {
       query = query.order("timestamp", { ascending: false });
     }
     
-    if ('limit' in query) {
+    if (typeof query.limit === 'function') {
       query = query.limit(limit);
     }
     
@@ -158,7 +156,7 @@ export const updatePromptLogArticleCount = async (
       .from("prompt_logs")
       .update({ articleCount });
     
-    if ('eq' in query) {
+    if (typeof query.eq === 'function') {
       query = query.eq("id", logId);
     }
     
@@ -190,7 +188,7 @@ export const deleteOldPromptLogs = async (
       .from("prompt_logs")
       .delete();
     
-    if ('lt' in query) {
+    if (typeof query.lt === 'function') {
       query = query.lt("timestamp", cutoffDate.toISOString());
     }
     
@@ -220,15 +218,15 @@ export const searchPromptLogs = async (
       .from("prompt_logs")
       .select("*");
     
-    if ('or' in query) {
+    if (typeof query.or === 'function') {
       query = query.or(`originalPrompt.ilike.%${searchTerm}%,enhancedPrompt.ilike.%${searchTerm}%`);
     }
     
-    if ('order' in query) {
+    if (typeof query.order === 'function') {
       query = query.order("timestamp", { ascending: false });
     }
     
-    if ('limit' in query) {
+    if (typeof query.limit === 'function') {
       query = query.limit(limit);
     }
     
