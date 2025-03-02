@@ -111,7 +111,7 @@ export default function NewsPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Sparkles className="h-5 w-5 text-primary" />
-                  Daily News Summary - {new Date(dailySummary.date).toLocaleDateString()}
+                  Daily News Summary - {new Date(dailySummary.date).toLocaleDateString("en-US")}
                 </CardTitle>
                 <CardDescription>
                   {dailySummary.articleCount} articles analyzed across {dailySummary.categories.length} categories
@@ -251,6 +251,14 @@ function getScoreColor(score: number): string {
 }
 
 function formatDate(dateString: string): string {
+  // Parse the date string
   const date = new Date(dateString);
-  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  
+  // Format the date in a way that's consistent between server and client
+  // by manually constructing the string instead of using toLocaleDateString
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const month = months[date.getUTCMonth()];
+  const day = date.getUTCDate();
+  
+  return `${month} ${day}`;
 }
