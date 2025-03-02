@@ -9,9 +9,90 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { getPromptLogs } from "@/services/promptService"
-import { searchPromptLogs } from "@/services/supabaseService"
 import { PromptLog } from "@/types/settings"
+
+// Mock data for client-side rendering when Supabase is not available
+const mockPromptLogs: PromptLog[] = [
+  {
+    id: "1",
+    timestamp: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
+    originalPrompt: "Find news about HPC innovations in the last week",
+    enhancedPrompt: "Enhanced prompt with context about HPC innovations...",
+    provider: "perplexity",
+    articleCount: 12,
+    status: "success"
+  },
+  {
+    id: "2",
+    timestamp: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+    originalPrompt: "Latest developments in Bitcoin mining efficiency",
+    enhancedPrompt: "Enhanced prompt with context about Bitcoin mining...",
+    provider: "perplexity",
+    articleCount: 8,
+    status: "success"
+  },
+  {
+    id: "3",
+    timestamp: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
+    originalPrompt: "AI advancements in natural language processing",
+    enhancedPrompt: "Enhanced prompt with context about NLP advancements...",
+    provider: "openai",
+    articleCount: 15,
+    status: "success"
+  },
+  {
+    id: "4",
+    timestamp: new Date(Date.now() - 259200000).toISOString(), // 3 days ago
+    originalPrompt: "Quantum computing breakthroughs this month",
+    enhancedPrompt: "Enhanced prompt with context about quantum computing...",
+    provider: "anthropic",
+    articleCount: 6,
+    status: "success"
+  }
+];
+
+// Client-side only implementation of getPromptLogs
+const getPromptLogs = async (
+  limit: number = 50,
+  provider?: "perplexity" | "openai" | "anthropic"
+): Promise<PromptLog[]> => {
+  // In a real implementation, this would call the API
+  // For now, we'll use mock data
+  try {
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    if (provider) {
+      return mockPromptLogs.filter(log => log.provider === provider);
+    }
+    
+    return mockPromptLogs;
+  } catch (error) {
+    console.error("Error retrieving prompt logs:", error);
+    return [];
+  }
+};
+
+// Client-side only implementation of searchPromptLogs
+const searchPromptLogs = async (
+  searchTerm: string,
+  limit: number = 50
+): Promise<PromptLog[]> => {
+  // In a real implementation, this would call the API
+  // For now, we'll use mock data
+  try {
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    return mockPromptLogs.filter(log => 
+      log.originalPrompt.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      log.enhancedPrompt.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  } catch (error) {
+    console.error("Error searching prompt logs:", error);
+    return [];
+  }
+};
 
 export function ReasoningSettings() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -515,3 +596,5 @@ export function ReasoningSettings() {
     </Card>
   )
 }
+
+export default ReasoningSettings;

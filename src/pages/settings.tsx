@@ -1,12 +1,14 @@
 
 import Head from "next/head"
+import dynamic from "next/dynamic"
 import { 
   FileText,
   Globe,
   Sparkles,
   Wrench,
   Info,
-  BrainCircuit
+  BrainCircuit,
+  Loader2
 } from "lucide-react"
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -15,7 +17,21 @@ import { SourceSettings } from "@/components/settings/SourceSettings"
 import { SummarizationSettings } from "@/components/settings/SummarizationSettings"
 import { AdvancedSettings } from "@/components/settings/AdvancedSettings"
 import { PipelineOverview } from "@/components/settings/PipelineOverview"
-import { ReasoningSettings } from "@/components/settings/ReasoningSettings"
+
+// Dynamically import the ReasoningSettings component with SSR disabled
+// This prevents the Pinecone library from being bundled during build time
+const ReasoningSettings = dynamic(
+  () => import("@/components/settings/ReasoningSettings").then(mod => mod.ReasoningSettings),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="flex justify-center items-center p-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2">Loading reasoning settings...</span>
+      </div>
+    )
+  }
+)
 
 export default function SettingsPage() {
   return (
