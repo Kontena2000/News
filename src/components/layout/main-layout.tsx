@@ -2,7 +2,7 @@
 import { ReactNode } from "react"
 import Link from "next/link"
 import { useRouter } from "next/router"
-import { Newspaper, Settings, BarChart3, Search, Rss } from "lucide-react"
+import { Newspaper, Settings, Search, Rss } from "lucide-react"
 
 import {
   Sidebar,
@@ -44,16 +44,6 @@ export function MainLayout({ children }: MainLayoutProps) {
                 >
                   <Newspaper className="h-4 w-4" />
                   <span>News</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  isActive={router.pathname === "/analytics"}
-                  onClick={() => router.push("/analytics")}
-                  tooltip="Analytics"
-                >
-                  <BarChart3 className="h-4 w-4" />
-                  <span>Analytics</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>

@@ -5,14 +5,10 @@ import {
   Settings as SettingsIcon,
   FileText,
   Globe,
-  BarChart3,
-  Layout,
   Sparkles,
   Wrench,
-  Save,
   Star,
-  X,
-  Check
+  X
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -35,16 +31,59 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
 export default function SettingsPage() {
-  const [isSaving, setIsSaving] = useState(false)
   const [resultsLimit, setResultsLimit] = useState(50)
   
-  const handleSave = () => {
-    setIsSaving(true)
-    // Simulate API call
-    setTimeout(() => {
-      setIsSaving(false)
-    }, 1000)
-  }
+  const kontenaPrompt = `*Goal:*  
+You are a smart AI Assistant capable of identifying and estimating which topics are of high priority to Kontena. Your objective is to determine subjects with high importance and significance for creating business opportunities and understanding the HPC, Bitcoin, and energy storage sectors in which Kontena operates.  
+
+---
+
+*Return Format:*  
+Only list topics that contain high-value keywords relevant to Kontena's business activities. Do not include unrelated or low-priority topics.  
+
+---
+
+*Warnings:*  
+- Ensure that the returned topics align with the main business activities of Kontena.  
+- Focus on topics that create synergy with our services, solutions, and modular products.  
+- Do not include generic industry trends unless they directly impact Kontena's ability to innovate, provide modular solutions, or generate business opportunities.  
+
+---
+
+*Context Dump:*  
+Kontena is a Belgium-based company operating in the HPC (High-Performance Computing), Bitcoin, and energy storage sectors. Our primary activity is to provide services, solutions, and products to businesses looking to start or expand in these fields.  
+
+Kontena's key strengths include:  
+- Offering modular solutions that deviate from traditional consultancy approaches.  
+- A strong "can-do" mentality, providing flexible and out-of-the-box solutions.  
+- Adapting quickly to new technological advancements and industry shifts.  
+
+We seek topics that enhance our market position, provide competitive advantages, and align with our vision of revolutionizing HPC and energy storage through innovative modular solutions.`
+
+  const summarizationPrompt = `*Goal:*
+You are an expert summarizer capable of condensing complex news articles into clear, concise summaries. Your objective is to extract the most important information and present it in a way that is easy to understand while preserving the key points.
+
+---
+
+*Return Format:*
+Provide a concise summary of 2-3 paragraphs that captures the essential information from the article. Focus on the main points, key facts, and significant implications.
+
+---
+
+*Guidelines:*
+- Maintain objectivity and avoid inserting opinions
+- Preserve the original meaning and context
+- Highlight the most important facts and developments
+- Include relevant statistics, quotes, or data points when critical
+- Omit unnecessary details, background information, or tangential points
+- Use clear, straightforward language
+
+---
+
+*Structure:*
+1. First paragraph: Core news/announcement and primary details
+2. Second paragraph: Supporting information, context, and implications
+3. Third paragraph (if needed): Additional relevant details or future outlook`
 
   return (
     <>
@@ -62,20 +101,10 @@ export default function SettingsPage() {
               Configure how the ZORK News Scraper collects and processes news
             </p>
           </div>
-          <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving ? (
-              <>Saving...</>
-            ) : (
-              <>
-                <Save className="mr-2 h-4 w-4" />
-                Save Settings
-              </>
-            )}
-          </Button>
         </div>
 
         <Tabs defaultValue="prompt" className="space-y-4">
-          <TabsList className="grid grid-cols-3 md:grid-cols-6">
+          <TabsList className="grid grid-cols-2 md:grid-cols-4">
             <TabsTrigger value="prompt" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
               <span className="hidden md:inline">Prompt</span>
@@ -83,14 +112,6 @@ export default function SettingsPage() {
             <TabsTrigger value="sources" className="flex items-center gap-2">
               <Globe className="h-4 w-4" />
               <span className="hidden md:inline">Sources</span>
-            </TabsTrigger>
-            <TabsTrigger value="relevance" className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" />
-              <span className="hidden md:inline">Relevance</span>
-            </TabsTrigger>
-            <TabsTrigger value="display" className="flex items-center gap-2">
-              <Layout className="h-4 w-4" />
-              <span className="hidden md:inline">Display</span>
             </TabsTrigger>
             <TabsTrigger value="summarization" className="flex items-center gap-2">
               <Sparkles className="h-4 w-4" />
@@ -117,9 +138,9 @@ export default function SettingsPage() {
                     <Label htmlFor="primary-prompt">Primary News-Gathering Prompt</Label>
                     <Textarea 
                       id="primary-prompt"
-                      placeholder="Find news articles about developments in AI technology that could impact marketing agencies"
-                      className="min-h-[120px]"
-                      defaultValue="Find news articles about developments in AI technology that could impact marketing agencies"
+                      placeholder="Enter your search prompt"
+                      className="min-h-[300px] font-mono text-sm"
+                      defaultValue={kontenaPrompt}
                     />
                     <p className="text-sm text-muted-foreground">
                       This prompt will be used as the base for gathering relevant news articles
@@ -186,9 +207,6 @@ export default function SettingsPage() {
               </CardContent>
               <CardFooter className="flex justify-between">
                 <Button variant="outline">Reset to Defaults</Button>
-                <Button onClick={handleSave} disabled={isSaving}>
-                  {isSaving ? "Saving..." : "Save Changes"}
-                </Button>
               </CardFooter>
             </Card>
           </TabsContent>
@@ -403,52 +421,7 @@ export default function SettingsPage() {
               </CardContent>
               <CardFooter className="flex justify-between">
                 <Button variant="outline">Reset to Defaults</Button>
-                <Button onClick={handleSave} disabled={isSaving}>
-                  {isSaving ? "Saving..." : "Save Changes"}
-                </Button>
               </CardFooter>
-            </Card>
-          </TabsContent>
-
-          {/* Relevance Settings */}
-          <TabsContent value="relevance">
-            <Card>
-              <CardHeader>
-                <CardTitle>Relevance Settings</CardTitle>
-                <CardDescription>
-                  Configure how content relevance is determined
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex h-[300px] items-center justify-center">
-                <div className="flex flex-col items-center text-center">
-                  <BarChart3 className="h-10 w-10 text-muted-foreground/50" />
-                  <h3 className="mt-4 text-lg font-medium">Relevance Settings</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    This section will contain settings for minimum relevance score, keyword boost management, competitor handling, and context scoring weights.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Display Configuration */}
-          <TabsContent value="display">
-            <Card>
-              <CardHeader>
-                <CardTitle>Display Configuration</CardTitle>
-                <CardDescription>
-                  Configure how news content is displayed
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex h-[300px] items-center justify-center">
-                <div className="flex flex-col items-center text-center">
-                  <Layout className="h-10 w-10 text-muted-foreground/50" />
-                  <h3 className="mt-4 text-lg font-medium">Display Configuration</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    This section will contain settings for default view, sort order, items per page, card style options, and saved filters management.
-                  </p>
-                </div>
-              </CardContent>
             </Card>
           </TabsContent>
 
@@ -461,15 +434,79 @@ export default function SettingsPage() {
                   Configure how articles are summarized and daily news flashes
                 </CardDescription>
               </CardHeader>
-              <CardContent className="flex h-[300px] items-center justify-center">
-                <div className="flex flex-col items-center text-center">
-                  <Sparkles className="h-10 w-10 text-muted-foreground/50" />
-                  <h3 className="mt-4 text-lg font-medium">Summarization Controls</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    This section will contain settings for article summary length and style, as well as daily news flash configuration.
-                  </p>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="summarization-prompt">Summarization Prompt</Label>
+                    <Textarea 
+                      id="summarization-prompt"
+                      placeholder="Enter your summarization prompt"
+                      className="min-h-[200px] font-mono text-sm"
+                      defaultValue={summarizationPrompt}
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      This prompt will be used to generate summaries of news articles
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="summary-length">Summary Length</Label>
+                    <Select defaultValue="medium">
+                      <SelectTrigger id="summary-length">
+                        <SelectValue placeholder="Select length" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="short">Short (1-2 sentences)</SelectItem>
+                        <SelectItem value="medium">Medium (1 paragraph)</SelectItem>
+                        <SelectItem value="long">Long (2-3 paragraphs)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-sm text-muted-foreground">
+                      How long the generated summaries should be
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="daily-summary-frequency">Daily Summary Frequency</Label>
+                    <Select defaultValue="daily">
+                      <SelectTrigger id="daily-summary-frequency">
+                        <SelectValue placeholder="Select frequency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="daily">Daily</SelectItem>
+                        <SelectItem value="weekdays">Weekdays Only</SelectItem>
+                        <SelectItem value="weekly">Weekly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-sm text-muted-foreground">
+                      How often to generate daily news summaries
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Switch id="include-quotes" defaultChecked />
+                      <Label htmlFor="include-quotes">Include Key Quotes</Label>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Include important quotes from the original articles in summaries
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Switch id="highlight-keywords" defaultChecked />
+                      <Label htmlFor="highlight-keywords">Highlight Keywords</Label>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Highlight important keywords in the generated summaries
+                    </p>
+                  </div>
                 </div>
               </CardContent>
+              <CardFooter className="flex justify-between">
+                <Button variant="outline">Reset to Defaults</Button>
+              </CardFooter>
             </Card>
           </TabsContent>
 
@@ -482,15 +519,62 @@ export default function SettingsPage() {
                   Configure technical settings and integrations
                 </CardDescription>
               </CardHeader>
-              <CardContent className="flex h-[300px] items-center justify-center">
-                <div className="flex flex-col items-center text-center">
-                  <Wrench className="h-10 w-10 text-muted-foreground/50" />
-                  <h3 className="mt-4 text-lg font-medium">Advanced Configuration</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    This section will contain settings for vector database connection, API credential management, debug tools, and ZORK CMS integration.
-                  </p>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="api-key">OpenAI API Key</Label>
+                    <Input 
+                      id="api-key"
+                      type="password"
+                      placeholder="sk-..."
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      API key for OpenAI services
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="model-selection">AI Model</Label>
+                    <Select defaultValue="gpt-4">
+                      <SelectTrigger id="model-selection">
+                        <SelectValue placeholder="Select model" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="gpt-4">GPT-4</SelectItem>
+                        <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
+                        <SelectItem value="claude-3-opus">Claude 3 Opus</SelectItem>
+                        <SelectItem value="claude-3-sonnet">Claude 3 Sonnet</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-sm text-muted-foreground">
+                      AI model to use for content generation and analysis
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Switch id="debug-mode" />
+                      <Label htmlFor="debug-mode">Debug Mode</Label>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Enable detailed logging for troubleshooting
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Switch id="cache-results" defaultChecked />
+                      <Label htmlFor="cache-results">Cache Results</Label>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Cache API responses to reduce costs and improve performance
+                    </p>
+                  </div>
                 </div>
               </CardContent>
+              <CardFooter className="flex justify-between">
+                <Button variant="outline">Reset to Defaults</Button>
+              </CardFooter>
             </Card>
           </TabsContent>
         </Tabs>
