@@ -4,7 +4,8 @@ import {
   FileText,
   Globe,
   Sparkles,
-  Wrench
+  Wrench,
+  Info
 } from "lucide-react"
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -12,6 +13,7 @@ import { PromptSettings } from "@/components/settings/PromptSettings"
 import { SourceSettings } from "@/components/settings/SourceSettings"
 import { SummarizationSettings } from "@/components/settings/SummarizationSettings"
 import { AdvancedSettings } from "@/components/settings/AdvancedSettings"
+import { PipelineOverview } from "@/components/settings/PipelineOverview"
 
 export default function SettingsPage() {
   return (
@@ -33,7 +35,11 @@ export default function SettingsPage() {
         </div>
 
         <Tabs defaultValue="prompt" className="space-y-4">
-          <TabsList className="grid grid-cols-2 md:grid-cols-4">
+          <TabsList className="grid grid-cols-2 md:grid-cols-5">
+            <TabsTrigger value="overview" className="flex items-center gap-2">
+              <Info className="h-4 w-4" />
+              <span className="hidden md:inline">Overview</span>
+            </TabsTrigger>
             <TabsTrigger value="prompt" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
               <span className="hidden md:inline">Prompt</span>
@@ -51,6 +57,11 @@ export default function SettingsPage() {
               <span className="hidden md:inline">Advanced</span>
             </TabsTrigger>
           </TabsList>
+
+          {/* Pipeline Overview */}
+          <TabsContent value="overview">
+            <PipelineOverview />
+          </TabsContent>
 
           {/* Prompt Configuration */}
           <TabsContent value="prompt">

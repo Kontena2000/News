@@ -44,7 +44,7 @@ const processArticles = (articles: Article[], settings: NewsSettings): Article[]
   // Filter articles based on settings
   let processedArticles = articles.filter(article => {
     // Filter by trusted sources if enabled
-    if (settings.filterByTrustedSources && settings.trustedSources?.length > 0) {
+    if (settings.filterByTrustedSources && settings.trustedSources && settings.trustedSources.length > 0) {
       if (!settings.trustedSources.includes(article.source)) {
         return false;
       }
@@ -57,7 +57,7 @@ const processArticles = (articles: Article[], settings: NewsSettings): Article[]
     }
     
     // Filter by categories if specified
-    if (settings.categories?.length > 0) {
+    if (settings.categories && settings.categories.length > 0) {
       if (!settings.categories.includes(article.category)) {
         return false;
       }
