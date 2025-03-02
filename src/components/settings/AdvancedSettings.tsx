@@ -1,5 +1,5 @@
 
-import { Wrench } from "lucide-react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -10,6 +10,47 @@ import { Separator } from "@/components/ui/separator"
 import { DatabaseConnectionSettings } from "@/components/settings/DatabaseConnectionSettings"
 
 export function AdvancedSettings() {
+  // State for API keys and settings
+  const [perplexityApiKey, setPerplexityApiKey] = useState("")
+  const [perplexityEndpoint, setPerplexityEndpoint] = useState("https://api.perplexity.ai/chat/completions")
+  const [openaiApiKey, setOpenaiApiKey] = useState("")
+  const [pineconeApiKey, setPineconeApiKey] = useState("")
+  const [pineconeUrl, setPineconeUrl] = useState("")
+  const [pineconeNamespace, setPineconeNamespace] = useState("")
+  
+  // State for sliders
+  const [maxTokens, setMaxTokens] = useState(1024)
+  const [temperature, setTemperature] = useState(0.7)
+
+  // Load environment variables on component mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      // Perplexity settings
+      if (process.env.NEXT_PUBLIC_PERPLEXITY_API_KEY) {
+        setPerplexityApiKey(process.env.NEXT_PUBLIC_PERPLEXITY_API_KEY)
+      }
+      if (process.env.NEXT_PUBLIC_PERPLEXITY_ENDPOINT) {
+        setPerplexityEndpoint(process.env.NEXT_PUBLIC_PERPLEXITY_ENDPOINT)
+      }
+      
+      // OpenAI settings
+      if (process.env.NEXT_PUBLIC_OPENAI_API_KEY) {
+        setOpenaiApiKey(process.env.NEXT_PUBLIC_OPENAI_API_KEY)
+      }
+      
+      // Pinecone settings
+      if (process.env.NEXT_PUBLIC_PINECONE_API_KEY) {
+        setPineconeApiKey(process.env.NEXT_PUBLIC_PINECONE_API_KEY)
+      }
+      if (process.env.NEXT_PUBLIC_PINECONE_URL) {
+        setPineconeUrl(process.env.NEXT_PUBLIC_PINECONE_URL)
+      }
+      if (process.env.NEXT_PUBLIC_PINECONE_NAMESPACE) {
+        setPineconeNamespace(process.env.NEXT_PUBLIC_PINECONE_NAMESPACE)
+      }
+    }
+  }, [])
+
   return (
     <Card>
       <CardHeader>
@@ -29,6 +70,8 @@ export function AdvancedSettings() {
               id="perplexity-api-key"
               type="password"
               placeholder="pplx-..."
+              value={perplexityApiKey}
+              onChange={(e) => setPerplexityApiKey(e.target.value)}
             />
             <p className="text-sm text-muted-foreground">
               API key for Perplexity services
@@ -59,13 +102,14 @@ export function AdvancedSettings() {
             <div className="flex items-center gap-4">
               <Slider 
                 id="perplexity-max-tokens"
-                defaultValue={[1024]} 
+                defaultValue={[maxTokens]} 
                 max={4096} 
                 min={256} 
                 step={128}
                 className="flex-1"
+                onValueChange={(value) => setMaxTokens(value[0])}
               />
-              <span className="w-12 text-sm">1024</span>
+              <span className="w-12 text-sm">{maxTokens}</span>
             </div>
             <p className="text-sm text-muted-foreground">
               Maximum number of tokens to generate in the response
@@ -77,13 +121,14 @@ export function AdvancedSettings() {
             <div className="flex items-center gap-4">
               <Slider 
                 id="perplexity-temperature"
-                defaultValue={[0.7]} 
+                defaultValue={[temperature]} 
                 max={1} 
                 min={0} 
                 step={0.1}
                 className="flex-1"
+                onValueChange={(value) => setTemperature(value[0])}
               />
-              <span className="w-12 text-sm">0.7</span>
+              <span className="w-12 text-sm">{temperature.toFixed(1)}</span>
             </div>
             <p className="text-sm text-muted-foreground">
               Controls randomness: lower values are more deterministic, higher values more creative
@@ -94,7 +139,8 @@ export function AdvancedSettings() {
             <Label htmlFor="perplexity-endpoint">API Endpoint</Label>
             <Input 
               id="perplexity-endpoint"
-              defaultValue="https://api.perplexity.ai/chat/completions"
+              value={perplexityEndpoint}
+              onChange={(e) => setPerplexityEndpoint(e.target.value)}
               placeholder="https://api.perplexity.ai/chat/completions"
             />
             <p className="text-sm text-muted-foreground">
@@ -113,6 +159,8 @@ export function AdvancedSettings() {
               id="api-key"
               type="password"
               placeholder="sk-..."
+              value={openaiApiKey}
+              onChange={(e) => setOpenaiApiKey(e.target.value)}
             />
             <p className="text-sm text-muted-foreground">
               API key for OpenAI services
@@ -148,6 +196,8 @@ export function AdvancedSettings() {
               id="pinecone-api-key"
               type="password"
               placeholder="pcsk_..."
+              value={pineconeApiKey}
+              onChange={(e) => setPineconeApiKey(e.target.value)}
             />
             <p className="text-sm text-muted-foreground">
               API key for Pinecone vector database
@@ -159,6 +209,8 @@ export function AdvancedSettings() {
             <Input 
               id="pinecone-url"
               placeholder="https://your-index.svc.region.pinecone.io"
+              value={pineconeUrl}
+              onChange={(e) => setPineconeUrl(e.target.value)}
             />
             <p className="text-sm text-muted-foreground">
               Pinecone service URL for your index
@@ -170,6 +222,8 @@ export function AdvancedSettings() {
             <Input 
               id="pinecone-namespace"
               placeholder="namespace"
+              value={pineconeNamespace}
+              onChange={(e) => setPineconeNamespace(e.target.value)}
             />
             <p className="text-sm text-muted-foreground">
               Namespace for organizing vectors within your Pinecone index
