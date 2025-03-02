@@ -30,6 +30,7 @@ export function AdvancedSettings() {
             <Input 
               id="perplexity-api-key"
               type="password"
+              defaultValue="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"
               placeholder="pplx-..."
             />
             <p className="text-sm text-muted-foreground">
@@ -115,6 +116,7 @@ export function AdvancedSettings() {
             <Input 
               id="api-key"
               type="password"
+              defaultValue="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"
               placeholder="sk-..."
             />
             <p className="text-sm text-muted-foreground">
@@ -137,6 +139,72 @@ export function AdvancedSettings() {
             </Select>
             <p className="text-sm text-muted-foreground">
               OpenAI model to use for content generation and analysis
+            </p>
+          </div>
+        </div>
+        
+        <Separator />
+        
+        {/* Pinecone Vector Database Settings */}
+        <div className="space-y-4 pt-4">
+          <h3 className="text-lg font-medium">Pinecone Vector Database</h3>
+          <div className="space-y-2">
+            <Label htmlFor="pinecone-api-key">Pinecone API Key</Label>
+            <Input 
+              id="pinecone-api-key"
+              type="password"
+              defaultValue="pcsk_63MATz_GapM2KixVaV3PVuuAKwPTtXdHMvLFVTAWmwKfqzgzLUpc7TMsr3FuVvdxAkmktC"
+              placeholder="pcsk_..."
+            />
+            <p className="text-sm text-muted-foreground">
+              API key for Pinecone vector database
+            </p>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="pinecone-url">Pinecone URL</Label>
+            <Input 
+              id="pinecone-url"
+              defaultValue="https://website-ifveaiv.svc.gcp-europe-west4-de1d.pinecone.io"
+              placeholder="https://your-index.svc.region.pinecone.io"
+            />
+            <p className="text-sm text-muted-foreground">
+              Pinecone service URL for your index
+            </p>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="pinecone-namespace">Pinecone Namespace</Label>
+            <Input 
+              id="pinecone-namespace"
+              defaultValue="website"
+              placeholder="namespace"
+            />
+            <p className="text-sm text-muted-foreground">
+              Namespace for organizing vectors within your Pinecone index
+            </p>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="pinecone-dimension">Vector Dimension</Label>
+            <Input 
+              id="pinecone-dimension"
+              type="number"
+              defaultValue="1536"
+              placeholder="1536"
+            />
+            <p className="text-sm text-muted-foreground">
+              Dimension of vectors stored in Pinecone (1536 for OpenAI embeddings)
+            </p>
+          </div>
+          
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <Switch id="pinecone-metadata" defaultChecked />
+              <Label htmlFor="pinecone-metadata">Include Metadata</Label>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Store additional metadata with vectors for better retrieval
             </p>
           </div>
         </div>
