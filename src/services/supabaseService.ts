@@ -5,6 +5,7 @@ import { PromptLog } from "@/types/settings";
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || "";
 
 // Define types for our mock client's query builders
 type MockQueryResult<T> = {
@@ -21,6 +22,7 @@ const RETRY_DELAY = 1000; // 1 second
 
 // Create a fallback client if environment variables are not set
 let supabase: SupabaseClient | any;
+let supabaseAdmin: SupabaseClient | any;
 
 try {
   if (!supabaseUrl || !supabaseKey) {
@@ -30,8 +32,18 @@ try {
     // Create a mock client for development with a simpler approach
     // that avoids recursive type definitions
     supabase = createMockClient();
+    supabaseAdmin = createMockClient();
   } else {
+    // Create regular client with anon key
     supabase = createClient(supabaseUrl, supabaseKey);
+    
+    // Create admin client with service role key if available
+    if (supabaseServiceKey) {
+      supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    } else {
+      console.warn("Supabase service key is missing. Admin operations will be limited.");
+      supabaseAdmin = supabase; // Fallback to regular client
+    }
     
     // Initialize database tables
     initializeDatabase().then(() => {
@@ -46,6 +58,7 @@ try {
       
       // Fall back to mock client
       supabase = createMockClient();
+      supabaseAdmin = createMockClient();
     });
   }
 } catch (error) {
@@ -55,6 +68,7 @@ try {
   
   // Fallback to mock client
   supabase = createMockClient();
+  supabaseAdmin = createMockClient();
 }
 
 // Helper function to create a mock client
@@ -139,7 +153,7 @@ async function initializeDatabase(): Promise<void> {
 async function createPromptLogsTable(): Promise<void> {
   try {
     // Using Supabase's RPC to execute raw SQL (requires appropriate permissions)
-    const { error } = await supabase.rpc("create_prompt_logs_table", {
+    const { error } = await supabaseAdmin.rpc("create_prompt_logs_table", {
       sql: `
         CREATE TABLE IF NOT EXISTS prompt_logs (
           id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -174,7 +188,7 @@ async function createPromptLogsTable(): Promise<void> {
 async function updatePromptLogsTableIfNeeded(): Promise<void> {
   try {
     // Check if all required columns exist
-    const { data, error } = await supabase.rpc("check_table_columns", {
+    const { data, error } = await supabaseAdmin.rpc("check_table_columns", {
       table_name: "prompt_logs",
       required_columns: [
         "id", "timestamp", "original_prompt", "enhanced_prompt", 
@@ -221,7 +235,7 @@ async function updatePromptLogsTableIfNeeded(): Promise<void> {
         }
         
         // Add the column
-        const { error } = await supabase.rpc("add_column_to_table", {
+        const { error } = await supabaseAdmin.rpc("add_column_to_table", {
           table_name: "prompt_logs",
           column_name: column,
           column_definition: `${dataType} ${constraints}`
@@ -268,7 +282,7 @@ export const getConnectionStatus = () => ({
   error: connectionError
 });
 
-export { supabase };
+export { supabase, supabaseAdmin };
 
 /**
  * Saves a prompt log to Supabase
@@ -505,7 +519,7 @@ export const createTable = async (
   }
   
   try {
-    const { error } = await supabase.rpc("execute_sql", {
+    const { error } = await supabaseAdmin.rpc("execute_sql", {
       sql: `CREATE TABLE IF NOT EXISTS ${tableName} (${tableDefinition});`
     });
     

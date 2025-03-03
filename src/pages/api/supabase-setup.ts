@@ -1,6 +1,6 @@
 
 import type { NextApiRequest, NextApiResponse } from "next";
-import { supabase } from "@/services/supabaseService";
+import { supabaseAdmin } from "@/services/supabaseService";
 
 type ResponseData = {
   success: boolean;
@@ -37,7 +37,7 @@ export default async function handler(
   
   try {
     // Create prompt_logs table
-    const promptLogsResult = await supabase.rpc("execute_sql", {
+    const promptLogsResult = await supabaseAdmin.rpc("execute_sql", {
       sql: `
         CREATE TABLE IF NOT EXISTS prompt_logs (
           id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -61,7 +61,7 @@ export default async function handler(
     }
     
     // Create helper functions for table management
-    const helperFunctionsResult = await supabase.rpc("execute_sql", {
+    const helperFunctionsResult = await supabaseAdmin.rpc("execute_sql", {
       sql: `
         -- Function to check if a table exists
         CREATE OR REPLACE FUNCTION check_table_exists(table_name TEXT)
@@ -142,7 +142,7 @@ export default async function handler(
     }
     
     // Get list of tables to confirm setup
-    const { data: tables, error: tablesError } = await supabase.from("information_schema.tables")
+    const { data: tables, error: tablesError } = await supabaseAdmin.from("information_schema.tables")
       .select("table_name")
       .eq("table_schema", "public");
     
