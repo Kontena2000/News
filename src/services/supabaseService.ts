@@ -33,8 +33,11 @@ try {
   } else {
     supabase = createClient(supabaseUrl, supabaseKey);
     
-    // Test connection
-    testConnection().then(isConnected => {
+    // Initialize database tables
+    initializeDatabase().then(() => {
+      // Test connection after initialization
+      return testConnection();
+    }).then(isConnected => {
       connectionStatus = isConnected ? "connected" : "error";
     }).catch(error => {
       connectionStatus = "error";
@@ -80,6 +83,9 @@ function createMockClient() {
       };
       
       return baseQuery;
+    },
+    rpc: (fn: string, params?: any) => {
+      return Promise.resolve({ data: null, error: null });
     }
   };
 }
@@ -100,6 +106,134 @@ async function testConnection(): Promise<boolean> {
   } catch (error) {
     console.error("Error testing Supabase connection:", error);
     return false;
+  }
+}
+
+// Initialize database tables
+async function initializeDatabase(): Promise<void> {
+  if (connectionStatus === "disconnected") {
+    console.warn("Supabase is in mock mode. Database initialization skipped.");
+    return;
+  }
+  
+  try {
+    // Check if the prompt_logs table exists by attempting to query it
+    const { error } = await supabase.from("prompt_logs").select("id").limit(1);
+    
+    // If there's an error, the table might not exist
+    if (error && error.code === "42P01") { // PostgreSQL code for undefined_table
+      console.log("Creating prompt_logs table...");
+      await createPromptLogsTable();
+    } else if (error) {
+      console.error("Error checking prompt_logs table:", error);
+    } else {
+      // Table exists, check if we need to update its structure
+      await updatePromptLogsTableIfNeeded();
+    }
+  } catch (error) {
+    console.error("Error initializing database:", error);
+  }
+}
+
+// Create the prompt_logs table
+async function createPromptLogsTable(): Promise<void> {
+  try {
+    // Using Supabase's RPC to execute raw SQL (requires appropriate permissions)
+    const { error } = await supabase.rpc("create_prompt_logs_table", {
+      sql: `
+        CREATE TABLE IF NOT EXISTS prompt_logs (
+          id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+          timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          original_prompt TEXT NOT NULL,
+          enhanced_prompt TEXT NOT NULL,
+          provider TEXT NOT NULL CHECK (provider IN ('perplexity', 'openai', 'anthropic')),
+          article_count INTEGER NOT NULL DEFAULT 0,
+          status TEXT NOT NULL CHECK (status IN ('success', 'error')),
+          error_message TEXT
+        );
+        
+        -- Create index for faster queries
+        CREATE INDEX IF NOT EXISTS idx_prompt_logs_timestamp ON prompt_logs(timestamp);
+        CREATE INDEX IF NOT EXISTS idx_prompt_logs_provider ON prompt_logs(provider);
+      `
+    });
+    
+    if (error) {
+      // If RPC fails, the function might not exist or user doesn't have permissions
+      console.error("Error creating prompt_logs table via RPC:", error);
+      console.log("Please create the table manually using the SQL in the error message.");
+      throw error;
+    }
+  } catch (error) {
+    console.error("Failed to create prompt_logs table:", error);
+    throw error;
+  }
+}
+
+// Update the prompt_logs table if needed
+async function updatePromptLogsTableIfNeeded(): Promise<void> {
+  try {
+    // Check if all required columns exist
+    const { data, error } = await supabase.rpc("check_table_columns", {
+      table_name: "prompt_logs",
+      required_columns: [
+        "id", "timestamp", "original_prompt", "enhanced_prompt", 
+        "provider", "article_count", "status", "error_message"
+      ]
+    });
+    
+    if (error) {
+      // If RPC fails, the function might not exist
+      console.error("Error checking prompt_logs columns:", error);
+      console.log("Please ensure all required columns exist in the prompt_logs table.");
+      return;
+    }
+    
+    // If missing columns are found, add them
+    if (data && data.missing_columns && data.missing_columns.length > 0) {
+      console.log(`Adding missing columns to prompt_logs: ${data.missing_columns.join(", ")}`);
+      
+      // Add each missing column
+      for (const column of data.missing_columns) {
+        let dataType = "TEXT";
+        let constraints = "";
+        
+        // Define data types and constraints based on column name
+        switch (column) {
+          case "article_count":
+            dataType = "INTEGER";
+            constraints = "NOT NULL DEFAULT 0";
+            break;
+          case "timestamp":
+            dataType = "TIMESTAMPTZ";
+            constraints = "NOT NULL DEFAULT NOW()";
+            break;
+          case "status":
+            dataType = "TEXT";
+            constraints = "NOT NULL CHECK (status IN ('success', 'error'))";
+            break;
+          case "provider":
+            dataType = "TEXT";
+            constraints = "NOT NULL CHECK (provider IN ('perplexity', 'openai', 'anthropic'))";
+            break;
+          default:
+            dataType = "TEXT";
+        }
+        
+        // Add the column
+        const { error } = await supabase.rpc("add_column_to_table", {
+          table_name: "prompt_logs",
+          column_name: column,
+          column_definition: `${dataType} ${constraints}`
+        });
+        
+        if (error) {
+          console.error(`Error adding column ${column} to prompt_logs:`, error);
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Error updating prompt_logs table:", error);
   }
 }
 
@@ -354,6 +488,35 @@ export const checkSupabaseConnection = async (): Promise<boolean> => {
     return await testConnection();
   } catch (error) {
     console.error("Error checking Supabase connection:", error);
+    return false;
+  }
+};
+
+/**
+ * Creates a new table in Supabase
+ */
+export const createTable = async (
+  tableName: string,
+  tableDefinition: string
+): Promise<boolean> => {
+  if (connectionStatus === "disconnected") {
+    console.warn(`Supabase is in mock mode. Table ${tableName} not actually created.`);
+    return false;
+  }
+  
+  try {
+    const { error } = await supabase.rpc("execute_sql", {
+      sql: `CREATE TABLE IF NOT EXISTS ${tableName} (${tableDefinition});`
+    });
+    
+    if (error) {
+      console.error(`Error creating table ${tableName}:`, error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error(`Error creating table ${tableName}:`, error);
     return false;
   }
 };
