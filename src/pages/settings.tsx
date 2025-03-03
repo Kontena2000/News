@@ -11,7 +11,8 @@ import {
   Loader2,
   Activity,
   ListChecks,
-  Bug
+  Bug,
+  Network
 } from "lucide-react"
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -22,6 +23,7 @@ import { AdvancedSettings } from "@/components/settings/AdvancedSettings"
 import { PipelineOverview } from "@/components/settings/PipelineOverview"
 import { PipelineStepByStep } from "@/components/settings/PipelineStepByStep"
 import { DebuggingGuide } from "@/components/settings/DebuggingGuide"
+import { MultiAgentWorkflow } from "@/components/settings/MultiAgentWorkflow"
 
 // Dynamically import components that use server-side libraries
 // This prevents them from being bundled during build time for client-side rendering
@@ -74,7 +76,7 @@ export default function SettingsPage() {
         </div>
 
         <Tabs defaultValue="step-by-step" className="space-y-4">
-          <TabsList className="grid grid-cols-2 md:grid-cols-9">
+          <TabsList className="grid grid-cols-2 md:grid-cols-10">
             <TabsTrigger value="step-by-step" className="flex items-center gap-2">
               <ListChecks className="h-4 w-4" />
               <span className="hidden md:inline">Step by Step</span>
@@ -82,6 +84,10 @@ export default function SettingsPage() {
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <Info className="h-4 w-4" />
               <span className="hidden md:inline">Overview</span>
+            </TabsTrigger>
+            <TabsTrigger value="agents" className="flex items-center gap-2">
+              <Network className="h-4 w-4" />
+              <span className="hidden md:inline">Agents</span>
             </TabsTrigger>
             <TabsTrigger value="prompt" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
@@ -121,6 +127,11 @@ export default function SettingsPage() {
           {/* Pipeline Overview */}
           <TabsContent value="overview">
             <PipelineOverview />
+          </TabsContent>
+          
+          {/* Multi-Agent Workflow */}
+          <TabsContent value="agents">
+            <MultiAgentWorkflow />
           </TabsContent>
 
           {/* Prompt Configuration */}
