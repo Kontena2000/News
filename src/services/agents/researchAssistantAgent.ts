@@ -1,7 +1,6 @@
 
 import { NewsSettings } from "@/types/settings";
 import { ResearchTask, ResearchResult } from "@/types/agents";
-import { fetchPerplexityResults } from "@/services/externalApiService";
 
 export const researchAssistantAgent = async (
   task: ResearchTask,
