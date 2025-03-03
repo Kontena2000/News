@@ -18,10 +18,11 @@ import { SourceSettings } from "@/components/settings/SourceSettings"
 import { SummarizationSettings } from "@/components/settings/SummarizationSettings"
 import { AdvancedSettings } from "@/components/settings/AdvancedSettings"
 import { PipelineOverview } from "@/components/settings/PipelineOverview"
-import { PipelineMonitor } from "@/components/settings/PipelineMonitor"
+
+// Dynamically import components that use server-side libraries
+// This prevents them from being bundled during build time for client-side rendering
 
 // Dynamically import the ReasoningSettings component with SSR disabled
-// This prevents the Pinecone library from being bundled during build time
 const ReasoningSettings = dynamic(
   () => import("@/components/settings/ReasoningSettings").then(mod => mod.ReasoningSettings),
   { 
@@ -30,6 +31,20 @@ const ReasoningSettings = dynamic(
       <div className="flex justify-center items-center p-12">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
         <span className="ml-2">Loading reasoning settings...</span>
+      </div>
+    )
+  }
+)
+
+// Dynamically import the PipelineMonitor component with SSR disabled
+const PipelineMonitor = dynamic(
+  () => import("@/components/settings/PipelineMonitor").then(mod => mod.PipelineMonitor),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="flex justify-center items-center p-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2">Loading pipeline monitor...</span>
       </div>
     )
   }

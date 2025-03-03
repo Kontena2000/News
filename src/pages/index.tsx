@@ -38,37 +38,11 @@ import { TrendsAnalysis } from "@/components/news/TrendsAnalysis"
 import { CrossDomainInsights } from "@/components/news/CrossDomainInsights"
 import { CollaborativeAnnotation } from "@/components/news/CollaborativeAnnotation"
 
-// Client-side only component to prevent hydration errors
-const LastUpdatedInfo = dynamic(() => Promise.resolve(({ date }: { date: Date }) => {
-  const [formattedDateTime, setFormattedDateTime] = useState<string>("")
-
-  useEffect(() => {
-    // Format date and time consistently for client-side only
-    // This avoids hydration errors by ensuring no server rendering of this component
-    const formatDateTime = (date: Date) => {
-      const hours = date.getUTCHours().toString().padStart(2, '0')
-      const minutes = date.getUTCMinutes().toString().padStart(2, '0')
-      const seconds = date.getUTCSeconds().toString().padStart(2, '0')
-      
-      const year = date.getUTCFullYear()
-      const month = (date.getUTCMonth() + 1).toString().padStart(2, '0')
-      const day = date.getUTCDate().toString().padStart(2, '0')
-      
-      return `${hours}:${minutes}:${seconds} UTC · ${year}-${month}-${day}`
-    }
-
-    setFormattedDateTime(formatDateTime(date))
-  }, [date])
-
-  // Only render when formattedDateTime is set (client-side only)
-  if (!formattedDateTime) return null
-
-  return (
-    <div className="text-xs text-muted-foreground">
-      Last updated: {formattedDateTime}
-    </div>
-  )
-}), { ssr: false })
+// Create a completely client-side component for the last updated info
+const LastUpdatedInfo = dynamic(
+  () => import("@/components/news/LastUpdatedInfo").then((mod) => mod.LastUpdatedInfo),
+  { ssr: false }
+)
 
 export default function NewsPage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
@@ -78,6 +52,12 @@ export default function NewsPage() {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [lastUpdated, setLastUpdated] = useState(new Date())
   const [insightsTimeframe, setInsightsTimeframe] = useState<"day" | "week" | "month" | "quarter">("week")
+  const [isClient, setIsClient] = useState(false)
+
+  // Set isClient to true when component mounts (client-side only)
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   // Toggle bookmark status
   const toggleBookmark = (articleId: string) => {
@@ -157,8 +137,8 @@ export default function NewsPage() {
           </div>
         </div>
 
-        {/* Client-side only component to prevent hydration errors */}
-        <LastUpdatedInfo date={lastUpdated} />
+        {/* Only render LastUpdatedInfo on the client side */}
+        {isClient && <LastUpdatedInfo date={lastUpdated} />}
 
         <Tabs defaultValue="all">
           <div className="flex items-center justify-between">

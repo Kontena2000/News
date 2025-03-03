@@ -68,14 +68,23 @@ const createPineconeClient = async (): Promise<PineconeClient> => {
     return createMockPineconeClient();
   }
   
-  // Server-side only code
+  // Server-side only code - we need to prevent this code from being included in client bundles
+  // We'll use a dynamic import with a try/catch to handle this safely
   try {
-    // Dynamic import only on server side
-    const { Pinecone } = await import('@pinecone-database/pinecone');
+    // This import is dynamically loaded only on the server side
+    // Using a function ensures it's not included in client bundles
+    const importPinecone = () => import('@pinecone-database/pinecone');
     
-    return new Pinecone({
-      apiKey: pineconeApiKey,
-    });
+    // Only execute this on the server
+    if (typeof window === 'undefined') {
+      const { Pinecone } = await importPinecone();
+      return new Pinecone({
+        apiKey: pineconeApiKey,
+      });
+    }
+    
+    // Fallback for client-side
+    return createMockPineconeClient();
   } catch (error) {
     console.error("Error initializing Pinecone client:", error);
     return createMockPineconeClient();

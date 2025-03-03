@@ -28,6 +28,9 @@ import {
   Search
 } from "lucide-react"
 
+// Import service check functions
+import { checkSupabaseConnection } from "@/services/supabaseService"
+
 // Define log entry type
 type LogEntry = {
   id: string
@@ -45,7 +48,26 @@ type Service = {
   status: "connected" | "disconnected" | "unknown"
   icon: React.ReactNode
   lastChecked: Date | null
+  checkConnection?: () => Promise<boolean>
 }
+
+// Function to check Pinecone connection via API route
+const checkPineconeConnection = async (): Promise<boolean> => {
+  try {
+    const response = await fetch('/api/pinecone-check', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    const data = await response.json();
+    return data.success;
+  } catch (error) {
+    console.error('Error checking Pinecone connection:', error);
+    return false;
+  }
+};
 
 export function PipelineMonitor() {
   // State for pipeline testing
@@ -60,7 +82,13 @@ export function PipelineMonitor() {
       description: "AI model for news processing",
       status: "unknown",
       icon: <Zap className="h-5 w-5 text-amber-500" />,
-      lastChecked: null
+      lastChecked: null,
+      checkConnection: async () => {
+        // In a real implementation, this would check the Perplexity API
+        // For now, we'll simulate a check based on whether the API key is set
+        const apiKey = process.env.NEXT_PUBLIC_PERPLEXITY_API_KEY
+        return !!apiKey
+      }
     },
     {
       id: "openai",
@@ -68,7 +96,13 @@ export function PipelineMonitor() {
       description: "Alternative AI model",
       status: "unknown",
       icon: <Sparkles className="h-5 w-5 text-green-500" />,
-      lastChecked: null
+      lastChecked: null,
+      checkConnection: async () => {
+        // In a real implementation, this would check the OpenAI API
+        // For now, we'll simulate a check based on whether the API key is set
+        const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY
+        return !!apiKey
+      }
     },
     {
       id: "pinecone",
@@ -76,7 +110,8 @@ export function PipelineMonitor() {
       description: "Vector database for embeddings",
       status: "unknown",
       icon: <Database className="h-5 w-5 text-blue-500" />,
-      lastChecked: null
+      lastChecked: null,
+      checkConnection: checkPineconeConnection
     },
     {
       id: "supabase",
@@ -84,7 +119,8 @@ export function PipelineMonitor() {
       description: "Database for storing articles and logs",
       status: "unknown",
       icon: <Database className="h-5 w-5 text-purple-500" />,
-      lastChecked: null
+      lastChecked: null,
+      checkConnection: checkSupabaseConnection
     },
     {
       id: "news-sources",
@@ -92,7 +128,12 @@ export function PipelineMonitor() {
       description: "External news APIs and websites",
       status: "unknown",
       icon: <Globe className="h-5 w-5 text-indigo-500" />,
-      lastChecked: null
+      lastChecked: null,
+      checkConnection: async () => {
+        // In a real implementation, this would check the news APIs
+        // For now, we'll simulate a successful connection
+        return true
+      }
     },
     {
       id: "news-service",
@@ -100,7 +141,12 @@ export function PipelineMonitor() {
       description: "Internal service for processing news",
       status: "unknown",
       icon: <Search className="h-5 w-5 text-orange-500" />,
-      lastChecked: null
+      lastChecked: null,
+      checkConnection: async () => {
+        // In a real implementation, this would check the internal service
+        // For now, we'll simulate a successful connection
+        return true
+      }
     }
   ])
   
@@ -143,16 +189,34 @@ export function PipelineMonitor() {
     // Check each service
     for (const service of services) {
       addLogEntry("info", `Checking connection to ${service.name}...`, "init")
-      await simulateDelay(500)
       
-      // Simulate random connection status for demo purposes
-      const isConnected = Math.random() > 0.3
-      updateServiceStatus(service.id, isConnected ? "connected" : "disconnected")
-      
-      if (isConnected) {
-        addLogEntry("success", `Successfully connected to ${service.name}`, "init")
-      } else {
-        addLogEntry("error", `Failed to connect to ${service.name}`, "init")
+      try {
+        // Use the service's checkConnection function if available
+        if (service.checkConnection) {
+          const isConnected = await service.checkConnection()
+          updateServiceStatus(service.id, isConnected ? "connected" : "disconnected")
+          
+          if (isConnected) {
+            addLogEntry("success", `Successfully connected to ${service.name}`, "init")
+          } else {
+            addLogEntry("error", `Failed to connect to ${service.name}`, "init")
+          }
+        } else {
+          // Fallback to simulation if no check function is available
+          await simulateDelay(500)
+          const isConnected = Math.random() > 0.3
+          updateServiceStatus(service.id, isConnected ? "connected" : "disconnected")
+          
+          if (isConnected) {
+            addLogEntry("success", `Successfully connected to ${service.name}`, "init")
+          } else {
+            addLogEntry("error", `Failed to connect to ${service.name}`, "init")
+          }
+        }
+      } catch (error) {
+        console.error(`Error checking connection to ${service.name}:`, error)
+        updateServiceStatus(service.id, "disconnected")
+        addLogEntry("error", `Error checking connection to ${service.name}: ${error instanceof Error ? error.message : String(error)}`, "init")
       }
     }
   }
@@ -163,105 +227,110 @@ export function PipelineMonitor() {
     clearLogs()
     setIsTestingPipeline(true)
     
-    // Check all services first
-    addLogEntry("info", "Starting pipeline test...", "init")
-    addLogEntry("info", "Checking service connections...", "init")
-    await checkAllServices()
-    
-    // Check if any critical services are disconnected
-    const criticalServices = ["perplexity", "supabase", "pinecone"]
-    const disconnectedCritical = services.filter(
-      service => criticalServices.includes(service.id) && service.status === "disconnected"
-    )
-    
-    if (disconnectedCritical.length > 0) {
-      addLogEntry(
-        "error", 
-        `Critical services disconnected: ${disconnectedCritical.map(s => s.name).join(", ")}`, 
-        "init"
+    try {
+      // Check all services first
+      addLogEntry("info", "Starting pipeline test...", "init")
+      addLogEntry("info", "Checking service connections...", "init")
+      await checkAllServices()
+      
+      // Check if any critical services are disconnected
+      const criticalServices = ["perplexity", "supabase", "pinecone"]
+      const disconnectedCritical = services.filter(
+        service => criticalServices.includes(service.id) && service.status === "disconnected"
       )
-      addLogEntry("error", "Pipeline test aborted due to disconnected services", "init")
-      setIsTestingPipeline(false)
-      return
-    }
-    
-    // Log successful initialization
-    addLogEntry("success", "Service connections verified", "init")
-    await simulateDelay(500)
-    
-    // Simulate fetching news sources
-    addLogEntry("info", "Connecting to news sources...", "fetch")
-    await simulateDelay(800)
-    addLogEntry("info", "Fetching articles from 5 sources...", "fetch")
-    await simulateDelay(1200)
-    
-    // Randomly decide if we should simulate an error
-    const shouldError = Math.random() < 0.3
-    
-    if (shouldError) {
-      addLogEntry("error", "Error fetching from source 'TechCrunch': Rate limit exceeded", "fetch")
-      addLogEntry("warning", "Continuing with partial data (4/5 sources)", "fetch")
-    } else {
-      addLogEntry("success", "Successfully fetched 32 articles from 5 sources", "fetch")
-    }
-    
-    // Simulate processing with Perplexity
-    addLogEntry("info", "Connecting to Perplexity API...", "process")
-    await simulateDelay(700)
-    addLogEntry("info", "Generating enhanced prompt with context...", "process")
-    await simulateDelay(900)
-    addLogEntry("info", "Sending request to Perplexity API...", "process")
-    await simulateDelay(1500)
-    
-    if (shouldError) {
-      addLogEntry("warning", "Received partial response from Perplexity API", "process")
-    } else {
-      addLogEntry("success", "Successfully processed articles with Perplexity API", "process")
-    }
-    
-    // Simulate vector storage with Pinecone
-    addLogEntry("info", "Connecting to Pinecone...", "store")
-    await simulateDelay(600)
-    addLogEntry("info", "Generating embeddings for articles...", "store")
-    await simulateDelay(1000)
-    addLogEntry("info", "Storing vectors in Pinecone...", "store")
-    await simulateDelay(800)
-    
-    if (shouldError) {
-      addLogEntry("error", "Error storing vectors: Pinecone connection timeout", "store")
-      addLogEntry("warning", "Retrying with backoff...", "store")
+      
+      if (disconnectedCritical.length > 0) {
+        addLogEntry(
+          "error", 
+          `Critical services disconnected: ${disconnectedCritical.map(s => s.name).join(", ")}`, 
+          "init"
+        )
+        addLogEntry("error", "Pipeline test aborted due to disconnected services", "init")
+        setIsTestingPipeline(false)
+        return
+      }
+      
+      // Log successful initialization
+      addLogEntry("success", "Service connections verified", "init")
+      await simulateDelay(500)
+      
+      // Simulate fetching news sources
+      addLogEntry("info", "Connecting to news sources...", "fetch")
+      await simulateDelay(800)
+      addLogEntry("info", "Fetching articles from 5 sources...", "fetch")
       await simulateDelay(1200)
-      addLogEntry("success", "Successfully stored vectors on retry", "store")
-    } else {
-      addLogEntry("success", "Successfully stored vectors in Pinecone", "store")
+      
+      // Randomly decide if we should simulate an error
+      const shouldError = Math.random() < 0.3
+      
+      if (shouldError) {
+        addLogEntry("error", "Error fetching from source 'TechCrunch': Rate limit exceeded", "fetch")
+        addLogEntry("warning", "Continuing with partial data (4/5 sources)", "fetch")
+      } else {
+        addLogEntry("success", "Successfully fetched 32 articles from 5 sources", "fetch")
+      }
+      
+      // Simulate processing with Perplexity
+      addLogEntry("info", "Connecting to Perplexity API...", "process")
+      await simulateDelay(700)
+      addLogEntry("info", "Generating enhanced prompt with context...", "process")
+      await simulateDelay(900)
+      addLogEntry("info", "Sending request to Perplexity API...", "process")
+      await simulateDelay(1500)
+      
+      if (shouldError) {
+        addLogEntry("warning", "Received partial response from Perplexity API", "process")
+      } else {
+        addLogEntry("success", "Successfully processed articles with Perplexity API", "process")
+      }
+      
+      // Simulate vector storage with Pinecone
+      addLogEntry("info", "Connecting to Pinecone...", "store")
+      await simulateDelay(600)
+      addLogEntry("info", "Generating embeddings for articles...", "store")
+      await simulateDelay(1000)
+      addLogEntry("info", "Storing vectors in Pinecone...", "store")
+      await simulateDelay(800)
+      
+      if (shouldError) {
+        addLogEntry("error", "Error storing vectors: Pinecone connection timeout", "store")
+        addLogEntry("warning", "Retrying with backoff...", "store")
+        await simulateDelay(1200)
+        addLogEntry("success", "Successfully stored vectors on retry", "store")
+      } else {
+        addLogEntry("success", "Successfully stored vectors in Pinecone", "store")
+      }
+      
+      // Simulate storing in Supabase
+      addLogEntry("info", "Connecting to Supabase...", "store")
+      await simulateDelay(500)
+      addLogEntry("info", "Storing processed articles in Supabase...", "store")
+      await simulateDelay(1000)
+      
+      if (shouldError) {
+        addLogEntry("warning", "Duplicate articles detected, skipping 3 articles", "store")
+        addLogEntry("success", "Successfully stored 29/32 articles in Supabase", "store")
+      } else {
+        addLogEntry("success", "Successfully stored all articles in Supabase", "store")
+      }
+      
+      // Complete the pipeline
+      addLogEntry("info", "Finalizing pipeline execution...", "complete")
+      await simulateDelay(500)
+      addLogEntry("success", "Pipeline test completed successfully", "complete")
+      
+      // Summary
+      if (shouldError) {
+        addLogEntry("warning", "Pipeline completed with warnings/errors. See log for details.", "complete")
+      } else {
+        addLogEntry("success", "Pipeline completed without errors", "complete")
+      }
+    } catch (error) {
+      console.error("Error during pipeline test:", error)
+      addLogEntry("error", `Pipeline test failed: ${error instanceof Error ? error.message : String(error)}`, "complete")
+    } finally {
+      setIsTestingPipeline(false)
     }
-    
-    // Simulate storing in Supabase
-    addLogEntry("info", "Connecting to Supabase...", "store")
-    await simulateDelay(500)
-    addLogEntry("info", "Storing processed articles in Supabase...", "store")
-    await simulateDelay(1000)
-    
-    if (shouldError) {
-      addLogEntry("warning", "Duplicate articles detected, skipping 3 articles", "store")
-      addLogEntry("success", "Successfully stored 29/32 articles in Supabase", "store")
-    } else {
-      addLogEntry("success", "Successfully stored all articles in Supabase", "store")
-    }
-    
-    // Complete the pipeline
-    addLogEntry("info", "Finalizing pipeline execution...", "complete")
-    await simulateDelay(500)
-    addLogEntry("success", "Pipeline test completed successfully", "complete")
-    
-    // Summary
-    if (shouldError) {
-      addLogEntry("warning", "Pipeline completed with warnings/errors. See log for details.", "complete")
-    } else {
-      addLogEntry("success", "Pipeline completed without errors", "complete")
-    }
-    
-    setIsTestingPipeline(false)
   }
   
   // Helper function to simulate delay
