@@ -10,7 +10,8 @@ import {
   BrainCircuit,
   Loader2,
   Activity,
-  ListChecks
+  ListChecks,
+  Bug
 } from "lucide-react"
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -20,6 +21,7 @@ import { SummarizationSettings } from "@/components/settings/SummarizationSettin
 import { AdvancedSettings } from "@/components/settings/AdvancedSettings"
 import { PipelineOverview } from "@/components/settings/PipelineOverview"
 import { PipelineStepByStep } from "@/components/settings/PipelineStepByStep"
+import { DebuggingGuide } from "@/components/settings/DebuggingGuide"
 
 // Dynamically import components that use server-side libraries
 // This prevents them from being bundled during build time for client-side rendering
@@ -72,7 +74,7 @@ export default function SettingsPage() {
         </div>
 
         <Tabs defaultValue="step-by-step" className="space-y-4">
-          <TabsList className="grid grid-cols-2 md:grid-cols-8">
+          <TabsList className="grid grid-cols-2 md:grid-cols-9">
             <TabsTrigger value="step-by-step" className="flex items-center gap-2">
               <ListChecks className="h-4 w-4" />
               <span className="hidden md:inline">Step by Step</span>
@@ -100,6 +102,10 @@ export default function SettingsPage() {
             <TabsTrigger value="monitor" className="flex items-center gap-2">
               <Activity className="h-4 w-4" />
               <span className="hidden md:inline">Monitor</span>
+            </TabsTrigger>
+            <TabsTrigger value="debug" className="flex items-center gap-2">
+              <Bug className="h-4 w-4" />
+              <span className="hidden md:inline">Debug</span>
             </TabsTrigger>
             <TabsTrigger value="advanced" className="flex items-center gap-2">
               <Wrench className="h-4 w-4" />
@@ -140,6 +146,11 @@ export default function SettingsPage() {
           {/* Pipeline Monitor */}
           <TabsContent value="monitor">
             <PipelineMonitor />
+          </TabsContent>
+
+          {/* Debugging Guide */}
+          <TabsContent value="debug">
+            <DebuggingGuide />
           </TabsContent>
 
           {/* Advanced Configuration */}

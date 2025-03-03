@@ -53,7 +53,7 @@ export function DebuggingGuide() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <Alert variant="info" className="bg-blue-50 dark:bg-blue-950">
+          <Alert className="bg-blue-50 dark:bg-blue-950">
             <Info className="h-4 w-4" />
             <AlertTitle>Debugging Mode</AlertTitle>
             <AlertDescription>
@@ -89,7 +89,7 @@ export function DebuggingGuide() {
                     <span>Pinecone Connection Issues</span>
                   </AccordionTrigger>
                   <AccordionContent className="space-y-3">
-                    <p>If you're having trouble connecting to Pinecone, check the following:</p>
+                    <p>If you&apos;re having trouble connecting to Pinecone, check the following:</p>
                     
                     <div className="space-y-2">
                       <h4 className="font-medium">1. Verify Environment Variables</h4>
@@ -169,7 +169,7 @@ export function DebuggingGuide() {
                     <span>Supabase Connection Issues</span>
                   </AccordionTrigger>
                   <AccordionContent className="space-y-3">
-                    <p>If you're having trouble connecting to Supabase, check the following:</p>
+                    <p>If you&apos;re having trouble connecting to Supabase, check the following:</p>
                     
                     <div className="space-y-2">
                       <h4 className="font-medium">1. Verify Environment Variables</h4>
@@ -242,7 +242,7 @@ export function DebuggingGuide() {
                     <span>Perplexity API Issues</span>
                   </AccordionTrigger>
                   <AccordionContent className="space-y-3">
-                    <p>If you're having trouble connecting to the Perplexity API, check the following:</p>
+                    <p>If you&apos;re having trouble connecting to the Perplexity API, check the following:</p>
                     
                     <div className="space-y-2">
                       <h4 className="font-medium">1. Verify Environment Variables</h4>
@@ -335,7 +335,7 @@ export function DebuggingGuide() {
             <TabsContent value="api" className="space-y-4">
               <h3 className="text-lg font-medium">API Key Troubleshooting</h3>
               
-              <Alert variant="warning" className="bg-amber-50 dark:bg-amber-950">
+              <Alert className="bg-amber-50 dark:bg-amber-950">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Security Warning</AlertTitle>
                 <AlertDescription>
@@ -356,7 +356,7 @@ export function DebuggingGuide() {
                     <li>Go to your Vercel project dashboard</li>
                     <li>Navigate to Settings → Environment Variables</li>
                     <li>Verify that all required API keys are set</li>
-                    <li>Ensure the variable names match exactly with what's expected in the code</li>
+                    <li>Ensure the variable names match exactly with what&apos;s expected in the code</li>
                     <li>After updating environment variables, redeploy your application</li>
                   </ol>
                   <Button 
@@ -417,7 +417,7 @@ export function DebuggingGuide() {
                     Using Mock Mode for Development
                   </h4>
                   <p className="text-sm text-muted-foreground mt-1 mb-3">
-                    If you're developing locally or don't have all API keys, you can use mock mode.
+                    If you&apos;re developing locally or don&apos;t have all API keys, you can use mock mode.
                   </p>
                   <div className="rounded-md bg-muted p-3 font-mono text-sm">
                     <div className="flex items-center justify-between">
@@ -456,7 +456,7 @@ export function DebuggingGuide() {
                   <ol className="list-decimal pl-5 space-y-2 text-sm">
                     <li>Go to your Vercel project dashboard</li>
                     <li>Click on the latest deployment</li>
-                    <li>Check the "Build Logs" and "Runtime Logs" tabs for errors</li>
+                    <li>Check the &quot;Build Logs&quot; and &quot;Runtime Logs&quot; tabs for errors</li>
                     <li>Look for any failed builds or runtime errors</li>
                   </ol>
                   <Button 
@@ -476,13 +476,13 @@ export function DebuggingGuide() {
                     Redeployment Steps
                   </h4>
                   <p className="text-sm text-muted-foreground mt-1 mb-3">
-                    If you've made changes to environment variables or need to force a fresh deployment:
+                    If you&apos;ve made changes to environment variables or need to force a fresh deployment:
                   </p>
                   <ol className="list-decimal pl-5 space-y-2 text-sm">
                     <li>Go to your Vercel project dashboard</li>
-                    <li>Click on the "Deployments" tab</li>
-                    <li>Click "Redeploy" on your latest deployment</li>
-                    <li>Select "Redeploy with existing Build Cache" or "Redeploy without Build Cache" for a complete rebuild</li>
+                    <li>Click on the &quot;Deployments&quot; tab</li>
+                    <li>Click &quot;Redeploy&quot; on your latest deployment</li>
+                    <li>Select &quot;Redeploy with existing Build Cache&quot; or &quot;Redeploy without Build Cache&quot; for a complete rebuild</li>
                   </ol>
                 </div>
                 
