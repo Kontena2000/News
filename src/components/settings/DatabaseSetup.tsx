@@ -4,8 +4,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { AlertCircle, Check, Database, RefreshCw } from "lucide-react"
+import { AlertCircle, Check, Database, RefreshCw, Info } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 
 export function DatabaseSetup() {
   const [isLoading, setIsLoading] = useState(false)
@@ -59,21 +60,47 @@ export function DatabaseSetup() {
           Database Setup
         </CardTitle>
         <CardDescription>
-          Create and update required database tables
+          Create and update required database tables for prompt logging and data storage
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        <Alert className="bg-blue-50 text-blue-800 dark:bg-blue-900 dark:text-blue-50">
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            This tool will create the necessary tables in your Supabase database using the service role key. 
+            Enter the setup secret key from your .env.local file to authorize this operation.
+          </AlertDescription>
+        </Alert>
+
+        <Accordion type="single" collapsible className="w-full">
+          <AccordionItem value="tables">
+            <AccordionTrigger className="text-sm font-medium">
+              Tables that will be created
+            </AccordionTrigger>
+            <AccordionContent>
+              <ul className="ml-6 list-disc text-sm text-muted-foreground space-y-2">
+                <li>
+                  <span className="font-medium">prompt_logs</span> - Stores the history of prompts used for news fetching
+                </li>
+                <li>
+                  <span className="font-medium">Helper Functions</span> - SQL functions to manage table structure and updates
+                </li>
+              </ul>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+
         <div className="space-y-2">
           <Label htmlFor="setup-secret">Setup Secret Key</Label>
           <Input
             id="setup-secret"
             type="password"
-            placeholder="Enter setup secret key"
+            placeholder="Enter setup secret key from .env.local"
             value={setupSecret}
             onChange={(e) => setSetupSecret(e.target.value)}
           />
           <p className="text-sm text-muted-foreground">
-            Secret key for authorizing database setup operations
+            The secret key (SETUP_SECRET_KEY) from your .env.local file that authorizes database setup operations
           </p>
         </div>
 
