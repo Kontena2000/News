@@ -9,7 +9,8 @@ import {
   Info,
   BrainCircuit,
   Loader2,
-  Activity
+  Activity,
+  ListChecks
 } from "lucide-react"
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -18,6 +19,7 @@ import { SourceSettings } from "@/components/settings/SourceSettings"
 import { SummarizationSettings } from "@/components/settings/SummarizationSettings"
 import { AdvancedSettings } from "@/components/settings/AdvancedSettings"
 import { PipelineOverview } from "@/components/settings/PipelineOverview"
+import { PipelineStepByStep } from "@/components/settings/PipelineStepByStep"
 
 // Dynamically import components that use server-side libraries
 // This prevents them from being bundled during build time for client-side rendering
@@ -69,8 +71,12 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <Tabs defaultValue="prompt" className="space-y-4">
-          <TabsList className="grid grid-cols-2 md:grid-cols-7">
+        <Tabs defaultValue="step-by-step" className="space-y-4">
+          <TabsList className="grid grid-cols-2 md:grid-cols-8">
+            <TabsTrigger value="step-by-step" className="flex items-center gap-2">
+              <ListChecks className="h-4 w-4" />
+              <span className="hidden md:inline">Step by Step</span>
+            </TabsTrigger>
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <Info className="h-4 w-4" />
               <span className="hidden md:inline">Overview</span>
@@ -100,6 +106,11 @@ export default function SettingsPage() {
               <span className="hidden md:inline">Advanced</span>
             </TabsTrigger>
           </TabsList>
+
+          {/* Step by Step Guide */}
+          <TabsContent value="step-by-step">
+            <PipelineStepByStep />
+          </TabsContent>
 
           {/* Pipeline Overview */}
           <TabsContent value="overview">
