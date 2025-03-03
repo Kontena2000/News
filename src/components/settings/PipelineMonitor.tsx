@@ -25,7 +25,11 @@ import {
   Zap,
   Filter,
   Sparkles,
-  Search
+  Search,
+  BookOpen,
+  ClipboardList,
+  Users,
+  Edit
 } from "lucide-react"
 
 // Import service check functions
@@ -37,7 +41,7 @@ type LogEntry = {
   timestamp: Date
   level: "info" | "warning" | "error" | "success"
   message: string
-  stage: "init" | "fetch" | "process" | "store" | "complete"
+  stage: "init" | "research_leader" | "project_planner" | "research_assistants" | "editor" | "storage" | "complete"
 }
 
 // Define service type
@@ -254,64 +258,72 @@ export function PipelineMonitor() {
       addLogEntry("success", "Service connections verified", "init")
       await simulateDelay(500)
       
-      // Simulate fetching news sources
-      addLogEntry("info", "Connecting to news sources...", "fetch")
+      // Simulate Research Leader Agent
+      addLogEntry("info", "Starting Research Leader Agent...", "research_leader")
       await simulateDelay(800)
-      addLogEntry("info", "Fetching articles from 5 sources...", "fetch")
+      addLogEntry("info", "Analyzing prompt and company context...", "research_leader")
+      await simulateDelay(1000)
+      addLogEntry("info", "Creating research plan and table of contents...", "research_leader")
       await simulateDelay(1200)
+      addLogEntry("success", "Research plan created with 5 main sections", "research_leader")
+      
+      // Simulate Project Planner Agent
+      addLogEntry("info", "Starting Project Planner Agent...", "project_planner")
+      await simulateDelay(700)
+      addLogEntry("info", "Breaking down research plan into tasks...", "project_planner")
+      await simulateDelay(900)
+      addLogEntry("info", "Assigning priorities and research depth to tasks...", "project_planner")
+      await simulateDelay(800)
+      addLogEntry("success", "Created 8 research tasks with priorities", "project_planner")
       
       // Randomly decide if we should simulate an error
       const shouldError = Math.random() < 0.3
       
-      if (shouldError) {
-        addLogEntry("error", "Error fetching from source 'TechCrunch': Rate limit exceeded", "fetch")
-        addLogEntry("warning", "Continuing with partial data (4/5 sources)", "fetch")
-      } else {
-        addLogEntry("success", "Successfully fetched 32 articles from 5 sources", "fetch")
-      }
-      
-      // Simulate processing with Perplexity
-      addLogEntry("info", "Connecting to Perplexity API...", "process")
-      await simulateDelay(700)
-      addLogEntry("info", "Generating enhanced prompt with context...", "process")
-      await simulateDelay(900)
-      addLogEntry("info", "Sending request to Perplexity API...", "process")
-      await simulateDelay(1500)
-      
-      if (shouldError) {
-        addLogEntry("warning", "Received partial response from Perplexity API", "process")
-      } else {
-        addLogEntry("success", "Successfully processed articles with Perplexity API", "process")
-      }
-      
-      // Simulate vector storage with Pinecone
-      addLogEntry("info", "Connecting to Pinecone...", "store")
+      // Simulate Research Assistant Agents
+      addLogEntry("info", "Starting Research Assistant Agents...", "research_assistants")
       await simulateDelay(600)
-      addLogEntry("info", "Generating embeddings for articles...", "store")
-      await simulateDelay(1000)
-      addLogEntry("info", "Storing vectors in Pinecone...", "store")
+      addLogEntry("info", "Assigning tasks to research assistants...", "research_assistants")
       await simulateDelay(800)
       
-      if (shouldError) {
-        addLogEntry("error", "Error storing vectors: Pinecone connection timeout", "store")
-        addLogEntry("warning", "Retrying with backoff...", "store")
-        await simulateDelay(1200)
-        addLogEntry("success", "Successfully stored vectors on retry", "store")
-      } else {
-        addLogEntry("success", "Successfully stored vectors in Pinecone", "store")
+      // Simulate multiple research assistants working
+      for (let i = 1; i <= 3; i++) {
+        addLogEntry("info", `Research Assistant ${i} starting work on assigned tasks...`, "research_assistants")
+        await simulateDelay(1000)
+        
+        if (shouldError && i === 2) {
+          addLogEntry("error", `Research Assistant ${i} encountered an error: Rate limit exceeded`, "research_assistants")
+          addLogEntry("warning", `Reassigning tasks from Research Assistant ${i}...`, "research_assistants")
+          await simulateDelay(800)
+        } else {
+          addLogEntry("success", `Research Assistant ${i} completed assigned tasks`, "research_assistants")
+        }
       }
       
+      addLogEntry("success", "All research tasks completed", "research_assistants")
+      
+      // Simulate Editor Agent
+      addLogEntry("info", "Starting Editor Agent...", "editor")
+      await simulateDelay(700)
+      addLogEntry("info", "Collecting research from all assistants...", "editor")
+      await simulateDelay(900)
+      addLogEntry("info", "Compiling research into coherent article...", "editor")
+      await simulateDelay(1200)
+      addLogEntry("info", "Adding citations and formatting...", "editor")
+      await simulateDelay(800)
+      addLogEntry("success", "Article successfully compiled", "editor")
+      
       // Simulate storing in Supabase
-      addLogEntry("info", "Connecting to Supabase...", "store")
+      addLogEntry("info", "Connecting to Supabase...", "storage")
       await simulateDelay(500)
-      addLogEntry("info", "Storing processed articles in Supabase...", "store")
+      addLogEntry("info", "Storing article in database...", "storage")
       await simulateDelay(1000)
       
       if (shouldError) {
-        addLogEntry("warning", "Duplicate articles detected, skipping 3 articles", "store")
-        addLogEntry("success", "Successfully stored 29/32 articles in Supabase", "store")
+        addLogEntry("warning", "Duplicate article detected, updating existing record", "storage")
+        await simulateDelay(700)
+        addLogEntry("success", "Article successfully updated in database", "storage")
       } else {
-        addLogEntry("success", "Successfully stored all articles in Supabase", "store")
+        addLogEntry("success", "Article successfully stored in database", "storage")
       }
       
       // Complete the pipeline
@@ -365,27 +377,46 @@ export function PipelineMonitor() {
   const StageBadge = ({ stage }: { stage: LogEntry["stage"] }) => {
     let label = ""
     let variant: "default" | "secondary" | "outline" = "outline"
+    let icon: React.ReactNode = null
     
     switch (stage) {
       case "init":
         label = "Initialization"
+        icon = <Terminal className="h-3 w-3 mr-1" />
         break
-      case "fetch":
-        label = "Data Fetching"
+      case "research_leader":
+        label = "Research Leader"
+        icon = <BookOpen className="h-3 w-3 mr-1" />
         break
-      case "process":
-        label = "Processing"
+      case "project_planner":
+        label = "Project Planner"
+        icon = <ClipboardList className="h-3 w-3 mr-1" />
         break
-      case "store":
+      case "research_assistants":
+        label = "Research Assistants"
+        icon = <Users className="h-3 w-3 mr-1" />
+        break
+      case "editor":
+        label = "Editor"
+        icon = <Edit className="h-3 w-3 mr-1" />
+        break
+      case "storage":
         label = "Storage"
+        icon = <Database className="h-3 w-3 mr-1" />
         break
       case "complete":
         label = "Completion"
         variant = "secondary"
+        icon = <Check className="h-3 w-3 mr-1" />
         break
     }
     
-    return <Badge variant={variant} className="ml-2">{label}</Badge>
+    return (
+      <Badge variant={variant} className="ml-2 flex items-center">
+        {icon}
+        {label}
+      </Badge>
+    )
   }
   
   // Get status indicator for service
@@ -421,7 +452,7 @@ export function PipelineMonitor() {
         <CardHeader>
           <CardTitle>Pipeline Monitor</CardTitle>
           <CardDescription>
-            Monitor and test the news processing pipeline
+            Monitor and test the multi-agent news research & article generation pipeline
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -477,6 +508,36 @@ export function PipelineMonitor() {
             </div>
           </div>
           
+          {/* Agent Workflow Diagram */}
+          <div className="border rounded-md p-4 bg-muted/20">
+            <h3 className="text-lg font-medium mb-3">Multi-Agent Workflow</h3>
+            <div className="flex flex-col md:flex-row items-center justify-between gap-2 text-center">
+              <div className="flex flex-col items-center p-3 bg-background rounded-md border w-full md:w-1/5">
+                <BookOpen className="h-8 w-8 text-primary mb-2" />
+                <h4 className="font-medium">Research Leader</h4>
+                <p className="text-xs text-muted-foreground mt-1">Plans research & creates TOC</p>
+              </div>
+              <div className="hidden md:block text-muted-foreground">→</div>
+              <div className="flex flex-col items-center p-3 bg-background rounded-md border w-full md:w-1/5">
+                <ClipboardList className="h-8 w-8 text-primary mb-2" />
+                <h4 className="font-medium">Project Planner</h4>
+                <p className="text-xs text-muted-foreground mt-1">Breaks down into tasks</p>
+              </div>
+              <div className="hidden md:block text-muted-foreground">→</div>
+              <div className="flex flex-col items-center p-3 bg-background rounded-md border w-full md:w-1/5">
+                <Users className="h-8 w-8 text-primary mb-2" />
+                <h4 className="font-medium">Research Assistants</h4>
+                <p className="text-xs text-muted-foreground mt-1">Gather information</p>
+              </div>
+              <div className="hidden md:block text-muted-foreground">→</div>
+              <div className="flex flex-col items-center p-3 bg-background rounded-md border w-full md:w-1/5">
+                <Edit className="h-8 w-8 text-primary mb-2" />
+                <h4 className="font-medium">Editor</h4>
+                <p className="text-xs text-muted-foreground mt-1">Compiles final article</p>
+              </div>
+            </div>
+          </div>
+          
           {/* Pipeline Test Controls */}
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-medium">Pipeline Test</h3>
@@ -514,7 +575,7 @@ export function PipelineMonitor() {
           </div>
           
           <p className="text-sm text-muted-foreground">
-            Test the complete news fetching pipeline with your current configuration. This will simulate the entire process from fetching to storage.
+            Test the complete multi-agent news research and article generation pipeline with your current configuration. This will simulate the entire process from research planning to article creation.
           </p>
           
           {/* Log Display */}
@@ -548,7 +609,7 @@ export function PipelineMonitor() {
               <div className="border rounded-md p-8 text-center bg-muted/20">
                 <Terminal className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
                 <p className="text-muted-foreground">
-                  Click &quot;Run Pipeline&quot; to test the news fetching pipeline
+                  Click &quot;Run Pipeline&quot; to test the multi-agent news research pipeline
                 </p>
               </div>
             )}
