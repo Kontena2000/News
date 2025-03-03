@@ -9,6 +9,10 @@ type ResponseData = {
   error?: string;
 };
 
+interface TableRecord {
+  table_name: string;
+}
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<ResponseData>
@@ -146,7 +150,7 @@ export default async function handler(
       throw new Error(`Failed to get table list: ${tablesError.message}`);
     }
     
-    const tableNames = tables?.map(t => t.table_name) || [];
+    const tableNames = tables?.map((t: TableRecord) => t.table_name) || [];
     
     return res.status(200).json({
       success: true,
