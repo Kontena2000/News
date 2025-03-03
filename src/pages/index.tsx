@@ -37,6 +37,7 @@ import {
 import { TrendsAnalysis } from "@/components/news/TrendsAnalysis"
 import { CrossDomainInsights } from "@/components/news/CrossDomainInsights"
 import { CollaborativeAnnotation } from "@/components/news/CollaborativeAnnotation"
+import { WelcomeBanner } from "@/components/WelcomeBanner"
 
 // Create a completely client-side component for the last updated info
 const LastUpdatedInfo = dynamic(
@@ -53,10 +54,17 @@ export default function NewsPage() {
   const [lastUpdated, setLastUpdated] = useState(new Date())
   const [insightsTimeframe, setInsightsTimeframe] = useState<"day" | "week" | "month" | "quarter">("week")
   const [isClient, setIsClient] = useState(false)
+  const [showWelcomeBanner, setShowWelcomeBanner] = useState(true)
 
   // Set isClient to true when component mounts (client-side only)
   useEffect(() => {
     setIsClient(true)
+    
+    // Check if the user has previously dismissed the welcome banner
+    const welcomeBannerDismissed = localStorage.getItem("welcomeBannerDismissed")
+    if (welcomeBannerDismissed === "true") {
+      setShowWelcomeBanner(false)
+    }
   }, [])
 
   // Toggle bookmark status
@@ -89,6 +97,12 @@ export default function NewsPage() {
     alert("Link copied to clipboard")
   }
 
+  // Dismiss welcome banner and remember the choice
+  const dismissWelcomeBanner = () => {
+    setShowWelcomeBanner(false)
+    localStorage.setItem("welcomeBannerDismissed", "true")
+  }
+
   return (
     <>
       <Head>
@@ -98,6 +112,8 @@ export default function NewsPage() {
       </Head>
 
       <div className="space-y-6">
+        {showWelcomeBanner && isClient && <WelcomeBanner />}
+        
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">News Feed</h1>
