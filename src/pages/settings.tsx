@@ -8,7 +8,8 @@ import {
   Wrench,
   Info,
   BrainCircuit,
-  Loader2
+  Loader2,
+  Activity
 } from "lucide-react"
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -17,6 +18,7 @@ import { SourceSettings } from "@/components/settings/SourceSettings"
 import { SummarizationSettings } from "@/components/settings/SummarizationSettings"
 import { AdvancedSettings } from "@/components/settings/AdvancedSettings"
 import { PipelineOverview } from "@/components/settings/PipelineOverview"
+import { PipelineMonitor } from "@/components/settings/PipelineMonitor"
 
 // Dynamically import the ReasoningSettings component with SSR disabled
 // This prevents the Pinecone library from being bundled during build time
@@ -53,7 +55,7 @@ export default function SettingsPage() {
         </div>
 
         <Tabs defaultValue="prompt" className="space-y-4">
-          <TabsList className="grid grid-cols-2 md:grid-cols-6">
+          <TabsList className="grid grid-cols-2 md:grid-cols-7">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <Info className="h-4 w-4" />
               <span className="hidden md:inline">Overview</span>
@@ -73,6 +75,10 @@ export default function SettingsPage() {
             <TabsTrigger value="reasoning" className="flex items-center gap-2">
               <BrainCircuit className="h-4 w-4" />
               <span className="hidden md:inline">Reasoning</span>
+            </TabsTrigger>
+            <TabsTrigger value="monitor" className="flex items-center gap-2">
+              <Activity className="h-4 w-4" />
+              <span className="hidden md:inline">Monitor</span>
             </TabsTrigger>
             <TabsTrigger value="advanced" className="flex items-center gap-2">
               <Wrench className="h-4 w-4" />
@@ -103,6 +109,11 @@ export default function SettingsPage() {
           {/* Reasoning & Prompt Logs */}
           <TabsContent value="reasoning">
             <ReasoningSettings />
+          </TabsContent>
+
+          {/* Pipeline Monitor */}
+          <TabsContent value="monitor">
+            <PipelineMonitor />
           </TabsContent>
 
           {/* Advanced Configuration */}

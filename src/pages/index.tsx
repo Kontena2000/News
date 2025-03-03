@@ -40,33 +40,32 @@ import { CollaborativeAnnotation } from "@/components/news/CollaborativeAnnotati
 
 // Client-side only component to prevent hydration errors
 const LastUpdatedInfo = dynamic(() => Promise.resolve(({ date }: { date: Date }) => {
-  const [formattedTime, setFormattedTime] = useState("")
-  const [formattedDate, setFormattedDate] = useState("")
+  const [formattedDateTime, setFormattedDateTime] = useState<string>("")
 
   useEffect(() => {
-    // Format time consistently for client-side only
-    const formatTime = (date: Date) => {
+    // Format date and time consistently for client-side only
+    // This avoids hydration errors by ensuring no server rendering of this component
+    const formatDateTime = (date: Date) => {
       const hours = date.getUTCHours().toString().padStart(2, '0')
       const minutes = date.getUTCMinutes().toString().padStart(2, '0')
       const seconds = date.getUTCSeconds().toString().padStart(2, '0')
-      return `${hours}:${minutes}:${seconds} UTC`
-    }
-
-    // Format date consistently for client-side only
-    const formatDate = (date: Date) => {
+      
       const year = date.getUTCFullYear()
       const month = (date.getUTCMonth() + 1).toString().padStart(2, '0')
       const day = date.getUTCDate().toString().padStart(2, '0')
-      return `${year}-${month}-${day}`
+      
+      return `${hours}:${minutes}:${seconds} UTC · ${year}-${month}-${day}`
     }
 
-    setFormattedTime(formatTime(date))
-    setFormattedDate(formatDate(date))
+    setFormattedDateTime(formatDateTime(date))
   }, [date])
+
+  // Only render when formattedDateTime is set (client-side only)
+  if (!formattedDateTime) return null
 
   return (
     <div className="text-xs text-muted-foreground">
-      Last updated: {formattedTime} · {formattedDate}
+      Last updated: {formattedDateTime}
     </div>
   )
 }), { ssr: false })
