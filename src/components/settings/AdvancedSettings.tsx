@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { AlertCircle, Check, Copy, Save } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { DatabaseConnectionSettings } from "@/components/settings/DatabaseConnectionSettings"
+import { DatabaseSetup } from "@/components/settings/DatabaseSetup"
 
 export function AdvancedSettings() {
   // State for API keys and settings
@@ -105,6 +106,9 @@ NEXT_PUBLIC_PINECONE_INDEX=${pineconeIndex}
 # Supabase Settings
 NEXT_PUBLIC_SUPABASE_URL=${supabaseUrl}
 NEXT_PUBLIC_SUPABASE_ANON_KEY=${supabaseAnonKey}
+
+# Setup Secret Key (for database initialization)
+SETUP_SECRET_KEY=your-secure-setup-key
     `.trim()
     
     navigator.clipboard.writeText(envText)
@@ -168,7 +172,19 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=${supabaseAnonKey}
           </Button>
         </div>
         
-        <DatabaseConnectionSettings />
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">Database Management</h3>
+          <div className="grid gap-4 md:grid-cols-2">
+            <DatabaseConnectionSettings />
+            <DatabaseSetup />
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Configure database connections and automatically create or update required tables in Supabase.
+            The database setup tool will create necessary tables and helper functions to manage table structure changes.
+          </p>
+        </div>
+        
+        <Separator />
         
         <div className="space-y-4 pt-4">
           <h3 className="text-lg font-medium">Perplexity API Settings</h3>
