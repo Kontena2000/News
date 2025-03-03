@@ -5,7 +5,7 @@ import { PromptLog } from "@/types/settings";
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || "";
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZlYmNrcm1wYWhqbWF4bGNiZGh5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MDkwMDM3NiwiZXhwIjoyMDU2NDc2Mzc2fQ.tKfNmO-bw6Fme96eg3oKq45BZ_5DFiMmAnAJEkCGKzY";
 
 // Define types for our mock client's query builders
 type MockQueryResult<T> = {
@@ -40,6 +40,7 @@ try {
     // Create admin client with service role key if available
     if (supabaseServiceKey) {
       supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+      console.log("Supabase admin client created with service role key");
     } else {
       console.warn("Supabase service key is missing. Admin operations will be limited.");
       supabaseAdmin = supabase; // Fallback to regular client
@@ -153,7 +154,7 @@ async function initializeDatabase(): Promise<void> {
 async function createPromptLogsTable(): Promise<void> {
   try {
     // Using Supabase's RPC to execute raw SQL (requires appropriate permissions)
-    const { error } = await supabaseAdmin.rpc("create_prompt_logs_table", {
+    const { error } = await supabaseAdmin.rpc("execute_sql", {
       sql: `
         CREATE TABLE IF NOT EXISTS prompt_logs (
           id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
