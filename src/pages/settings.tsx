@@ -12,7 +12,9 @@ import {
   Activity,
   ListChecks,
   Bug,
-  Network
+  Network,
+  Settings,
+  Users
 } from "lucide-react"
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -75,11 +77,11 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <Tabs defaultValue="step-by-step" className="space-y-4">
+        <Tabs defaultValue="setup" className="space-y-4">
           <TabsList className="grid grid-cols-2 md:grid-cols-10">
-            <TabsTrigger value="step-by-step" className="flex items-center gap-2">
+            <TabsTrigger value="setup" className="flex items-center gap-2">
               <ListChecks className="h-4 w-4" />
-              <span className="hidden md:inline">Step by Step</span>
+              <span className="hidden md:inline">Setup</span>
             </TabsTrigger>
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <Info className="h-4 w-4" />
@@ -89,13 +91,13 @@ export default function SettingsPage() {
               <Network className="h-4 w-4" />
               <span className="hidden md:inline">Agents</span>
             </TabsTrigger>
-            <TabsTrigger value="prompt" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              <span className="hidden md:inline">Prompt</span>
+            <TabsTrigger value="teamleader" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              <span className="hidden md:inline">Teamleader</span>
             </TabsTrigger>
-            <TabsTrigger value="sources" className="flex items-center gap-2">
-              <Globe className="h-4 w-4" />
-              <span className="hidden md:inline">Sources</span>
+            <TabsTrigger value="settings" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              <span className="hidden md:inline">Settings</span>
             </TabsTrigger>
             <TabsTrigger value="summarization" className="flex items-center gap-2">
               <Sparkles className="h-4 w-4" />
@@ -119,12 +121,12 @@ export default function SettingsPage() {
             </TabsTrigger>
           </TabsList>
 
-          {/* Step by Step Guide */}
-          <TabsContent value="step-by-step">
+          {/* Setup Guide (renamed from Step by Step) */}
+          <TabsContent value="setup">
             <PipelineStepByStep />
           </TabsContent>
 
-          {/* Pipeline Overview */}
+          {/* Pipeline Overview (How it works) */}
           <TabsContent value="overview">
             <PipelineOverview />
           </TabsContent>
@@ -134,13 +136,13 @@ export default function SettingsPage() {
             <MultiAgentWorkflow />
           </TabsContent>
 
-          {/* Prompt Configuration */}
-          <TabsContent value="prompt">
+          {/* Teamleader Configuration (renamed from Prompt) */}
+          <TabsContent value="teamleader">
             <PromptSettings />
           </TabsContent>
 
-          {/* Source Management */}
-          <TabsContent value="sources">
+          {/* Settings (renamed from Source Management) */}
+          <TabsContent value="settings">
             <SourceSettings />
           </TabsContent>
 
